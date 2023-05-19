@@ -7,17 +7,12 @@ from django.contrib.auth.models import BaseUserManager, AbstractBaseUser
 class UserManager(BaseUserManager):
     use_in_migrations = True
 
-    def create_user(self, email, full_name, password, date_of_birth, avatar=None):
-
+    def create_user(self, email, full_name, password=None, date_of_birth=datetime.date(2000, 1, 1), avatar=None):
         if not email:
             raise ValueError('Email must be set')
-        if not password:
-            raise ValueError('Password must be set')
-        if not full_name:
-            ('Name must be set')
 
         email = self.normalize_email(email)
-        user = self.create_user(
+        user = self.model(
             email=email,
             full_name=full_name,
             avatar=avatar,
@@ -28,7 +23,7 @@ class UserManager(BaseUserManager):
         # баз данных в проекте, параметр using позволит указать в какую БД сохранять модель
         return user
 
-    def create_staffuser(self, email, full_name, password, date_of_birth, avatar=None):
+    def create_staffuser(self, email, full_name, password, date_of_birth=datetime.date(2000, 1, 1), avatar=None):
         user = self.create_user(
             email=email,
             password=password,
@@ -41,7 +36,7 @@ class UserManager(BaseUserManager):
 
         return user
 
-    def create_superuser(self, email, full_name, password, date_of_birth, avatar=None):
+    def create_superuser(self, email, full_name, password, date_of_birth=datetime.date(2000, 1, 1), avatar=None):
         user = self.create_user(
             email=email,
             password=password,
@@ -49,6 +44,7 @@ class UserManager(BaseUserManager):
             avatar=avatar,
             date_of_birth=date_of_birth
         )
+        user.set_password(password)
         user.is_staff = True
         user.is_admin = True
         user.save(using=self._db)
@@ -68,8 +64,6 @@ class User(AbstractBaseUser):
         verbose_name='full_name'
     )
     password = models.CharField(
-        null=False,
-        blank=False,
         verbose_name='password'
     )
     avatar = models.ImageField(
@@ -84,7 +78,7 @@ class User(AbstractBaseUser):
     is_admin = models.BooleanField(default=False)
 
     USERNAME_FIELD = 'email'
-    REQUIRED_FIELDS = ['password', 'full_name', 'date_of_birth']
+    REQUIRED_FIELDS = ['password', 'full_name']
 
     objects = UserManager()
 

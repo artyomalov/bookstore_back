@@ -28,8 +28,14 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'rest_framework',
     'rest_framework_simplejwt',
+
     'user.apps.UserConfig',
     'authentication.apps.AuthenticationConfig',
+
+    'book.apps.BookConfig',
+    'usercart.apps.UsercartConfig',
+    'userfavoritebooks.apps.UserfavoritebooksConfig',
+
 ]
 
 MIDDLEWARE = [
