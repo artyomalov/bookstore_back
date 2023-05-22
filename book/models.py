@@ -54,15 +54,15 @@ class Book(models.Model):
     ]
     title = models.CharField(max_length=255, blank=False, null=False)
     annotation = models.CharField(max_length=4000, blank=False, null=False)
+    in_stock_quantity = models.IntegerField(
+        default=0, blank=False, null=False)
     genre = models.CharField(max_length=255, blank=False,
                              null=False, choices=GENRES)
     price = models.SmallIntegerField(null=False, blank=False)
-    in_stock = models.BooleanField(default=True)
     cover_image = models.ImageField(upload_to='covers/', blank=True, null=True)
-    average_value = models.IntegerField(default=0)
     author_ids = models.ManyToManyField(Author)
-    liked_by_user = models.ForeignKey(
-        UserFavoriteBooks, on_delete=models.DO_NOTHING, null=True)
+    liked_by_user = models.ManyToManyField(
+        UserFavoriteBooks)
 
     class Meta:
         verbose_name = 'book'
@@ -84,11 +84,11 @@ class Comment(models.Model):
 
 
 class BookRaiting(models.Model):
-    score = models.IntegerField(default=0)  # common count of users raitings
-    # count of users that reted some book
-    rated_users_count = models.IntegerField(default=0)
-    user_id = models.ForeignKey(User, on_delete=models.DO_NOTHING)
-    book_id = models.ForeignKey(Book, on_delete=models.CASCADE)
+    score = models.IntegerField(default=5)
+    user_id = models.ForeignKey(
+        User, on_delete=models.DO_NOTHING, null=True, blank=True)
+    book_id = models.ForeignKey(
+        Book, on_delete=models.CASCADE, null=True, blank=True)
 
     class Meta:
         verbose_name = 'raiting'
