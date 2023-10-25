@@ -1,10 +1,15 @@
-from user.models import User
+from rest_framework_simplejwt.tokens import RefreshToken
+from rest_framework_simplejwt.views import TokenRefreshView
+
 from rest_framework.exceptions import ValidationError
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.permissions import AllowAny
 from .serializers import SingupSerializer
+from user.models import User
+from user.serializers import AuthUserSerializer
+from passlib.apps import django_context
 
 
 class SignupAPIView(APIView):
@@ -15,16 +20,71 @@ class SignupAPIView(APIView):
     permission_classes = [AllowAny, ]
 
     def post(self, request):
+        try:
+            password = request.data.get('password', None)
+            confirm_password = request.data.get('confirm_password', None)
+            if password == confirm_password and password is not None:
+                serializer = SingupSerializer(data=request.data)
+                if not serializer.is_valid():
+                    raise ValidationError(
+                        'This password is too common.',
+                        'This password is entirely numeric.')
+                serializer.save()
+
+                data = {'email': serializer.data['email']}
+                response = status.HTTP_201_CREATED
+            else:
+                data = ''
+                raise ValidationError(
+                    {
+                        'password_mismatch': 'Password fields don\'t not match.'})
+            return Response(data, status=response)
+        except Exception as err:
+            data = {'error': err}
+            print(data)
+            return Response(data, status=status.HTTP_400_BAD_REQUEST)
+
+
+class CustomTokenObtainPairView(APIView):
+    permission_classes = [AllowAny, ]
+
+    def get_user(self, email):
+        try:
+            user = User.objects.get(email=email)
+            return user
+        except User.DoesNotExist:
+            return None
+
+    def create_token(self, user):
+        refresh = RefreshToken.for_user(user)
+        return {
+            'access': str(refresh.access_token),
+            'refresh': str(refresh),
+        }
+
+    def post(self, request):
+        print(request.data)
         password = request.data.get('password', None)
-        confirm_password = request.data.get('confirm_password', None)
-        if password == confirm_password:
-            serializer = SingupSerializer(data=request.data)
-            serializer.is_valid(raise_exception=True)
-            serializer.save()
-            data = serializer.data
-            response = status.HTTP_201_CREATED
-        else:
-            data = ''
-            raise ValidationError(
-                {'password_mismatch': 'Password fields don\'t not match.'})
-        return Response(data, status=response)
+        email = request.data.get('email', None)
+        user = self.get_user(email=email)
+        if user == None:
+            print('<<<<<<<<<<<<<User does not exist>>>>>>>>>>>>>')
+            return Response('User does not exist',
+                            status=status.HTTP_404_NOT_FOUND)
+
+        hash = user.password
+        is_validated = django_context.verify(password, hash)
+        if not is_validated:
+            return Response({'error': 'Password is not valid'},
+                            status=status.HTTP_401_UNAUTHORIZED)
+
+        token_data = self.create_token(user)
+        serializer = AuthUserSerializer(user, context={'request': request})
+        serializer_data = {
+            'email': serializer.data.get('email', None),
+            'fullName': serializer.data.get('full_name', None),
+            'avatar': serializer.data.get('avatar', None)
+        }
+        return Response(
+            {'token_data': token_data, 'user_data': serializer_data},
+            status=status.HTTP_200_OK)

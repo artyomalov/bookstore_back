@@ -1,5 +1,5 @@
+from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
-from django.contrib.auth import get_user_model
 from book.models import Book
 from user.models import User
 
@@ -12,22 +12,27 @@ class UserCart(models.Model):
         verbose_name_plural = 'carts'
 
 
-class ListOfUsersPurchases(models.Model):
-    user_id = models.OneToOneField(User,  on_delete=models.CASCADE)
-
-    class Meta:
-        verbose_name = 'purchase'
-        verbose_name_plural = 'purchases'
-
-
 class CartItem(models.Model):
-    user_id = models.OneToOneField(
-        User, on_delete=models.CASCADE, primary_key=True)
-    book_id = models.ManyToManyField(Book)
-    user_cart = models.ForeignKey(UserCart, on_delete=models.CASCADE)
-    user_purchase_list = models.ForeignKey(
-        ListOfUsersPurchases, on_delete=models.CASCADE, null=True)
+    user_cart = models.ForeignKey(
+        UserCart, on_delete=models.CASCADE)
+    purchases_list = models.ForeignKey(
+        UserCart, on_delete=models.CASCADE, related_name='purchases')
+    book = models.ForeignKey(
+        Book, on_delete=models.SET_NULL, null=True)
+    quantity = models.IntegerField(default=1, validators=[
+                                   MinValueValidator(1), MaxValueValidator(99)])
 
     class Meta:
         verbose_name = 'cart item'
         verbose_name_plural = 'cart items'
+
+
+class Comment(models.Model):
+    created_at = models.TimeField(auto_now_add=True)
+    comment_text = models.CharField(max_length=4000)
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    book = models.ForeignKey(Book, on_delete=models.CASCADE)
+
+    class Meta:
+        verbose_name = 'comment'
+        verbose_name_plural = 'comments'

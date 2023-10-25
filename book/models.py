@@ -1,13 +1,17 @@
+__all__ = ['Author', 'Book', 'BookRaiting']
+
 from django.db import models
 from django.contrib.auth import get_user_model
-from userfavoritebooks.models import UserFavoriteBooks
+from django.core.validators import MinValueValidator, MaxValueValidator
+from genres.models import Genre
+
 User = get_user_model()
 
 
 class Author(models.Model):
-    first_name = models.CharField(max_length=255, null=False, blank=False)
-    last_name = models.CharField(max_length=255, null=False, blank=False)
-    biography = models.TextField(max_length=4000, null=True, blank=True)
+    first_name = models.CharField(max_length=255, blank=False)
+    last_name = models.CharField(max_length=255, blank=False)
+    biography = models.TextField(max_length=4000, blank=True)
 
     class Meta:
         verbose_name = 'Author'
@@ -15,54 +19,17 @@ class Author(models.Model):
 
 
 class Book(models.Model):
-    FICTION = 'fiction'
-    NON_FICTION = 'non_fiction'
-    LIGHT_FICTION = 'light_fiction'
-    SCIENCE_FICTION = 'science_fiction'
-    FANTSY = 'fantasy'
-    BUSINESS_FINANCE = 'business_finance'
-    POLITICS = 'politics'
-    TREAVEL_BOOKS = 'travel_books'
-    AUTOBIOGRAPHY = 'autobiography'
-    HISTORY = 'history'
-    THRILLER_MYSTERY = 'thriller_Mystery'
-    ROMANCE = 'romance'
-    SATIRE = 'satire'
-    HORROR = 'horror'
-    HEALTH_MEDICINE = 'health_medicine'
-    CHILDEREN_BOOKS = 'childrens_books'
-    ENCYCLOPEDIA = 'encyclopedia'
+    title = models.CharField(max_length=255, blank=False, )
+    annotation = models.CharField(max_length=4000, blank=False, )
+    quantity = models.IntegerField(
+        default=0, blank=False, validators=[MinValueValidator(0)])
 
-    GENRES = [
-        (FICTION, 'fiction'),
-        (NON_FICTION, 'non_fiction'),
-        (LIGHT_FICTION, 'light_fiction'),
-        (SCIENCE_FICTION, 'science_fiction'),
-        (FANTSY, 'fantasy'),
-        (BUSINESS_FINANCE, 'business_finance'),
-        (POLITICS, 'politics'),
-        (TREAVEL_BOOKS, 'travel_books'),
-        (AUTOBIOGRAPHY, 'autobiography'),
-        (HISTORY, 'history'),
-        (THRILLER_MYSTERY, 'thriller_Mystery'),
-        (ROMANCE, 'romance'),
-        (SATIRE, 'satire'),
-        (HORROR, 'horror'),
-        (HEALTH_MEDICINE, 'health_medicine'),
-        (CHILDEREN_BOOKS, 'childrens_books'),
-        (ENCYCLOPEDIA, 'encyclopedia'),
-    ]
-    title = models.CharField(max_length=255, blank=False, null=False)
-    annotation = models.CharField(max_length=4000, blank=False, null=False)
-    in_stock_quantity = models.IntegerField(
-        default=0, blank=False, null=False)
-    genre = models.CharField(max_length=255, blank=False,
-                             null=False, choices=GENRES)
-    price = models.SmallIntegerField(null=False, blank=False)
-    cover_image = models.ImageField(upload_to='covers/', blank=True, null=True)
-    author_ids = models.ManyToManyField(Author)
-    liked_by_user = models.ManyToManyField(
-        UserFavoriteBooks)
+    price = models.SmallIntegerField(
+        blank=False, validators=[MinValueValidator(1)])
+    cover_image = models.ImageField(upload_to=f'covers/{title}', blank=False,
+                                    null=False)
+    authors = models.ManyToManyField(Author)
+    genres = models.ManyToManyField(Genre)
 
     class Meta:
         verbose_name = 'book'
@@ -72,23 +39,15 @@ class Book(models.Model):
         return self.title
 
 
-class Comment(models.Model):
-    created_at = models.TimeField(auto_now_add=True)
-    comment_text = models.CharField(max_length=4000)
-    user_id = models.ForeignKey(User, on_delete=models.CASCADE)
-    book_id = models.ForeignKey(Book, on_delete=models.CASCADE)
-
-    class Meta:
-        verbose_name = 'comment'
-        verbose_name_plural = 'books'
-
-
 class BookRaiting(models.Model):
-    score = models.IntegerField(default=5)
+    score = models.IntegerField(default=5, blank=False,
+                                validators=[
+                                    MinValueValidator(1),
+                                    MaxValueValidator(5)])
     user_id = models.ForeignKey(
-        User, on_delete=models.DO_NOTHING, null=True, blank=True)
+        User, on_delete=models.SET_NULL, null=True, blank=True)
     book_id = models.ForeignKey(
-        Book, on_delete=models.CASCADE, null=True, blank=True)
+        Book, on_delete=models.CASCADE, null=False, blank=False)
 
     class Meta:
         verbose_name = 'raiting'

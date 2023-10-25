@@ -1,13 +1,19 @@
 import datetime
+import os
+import sys
+from django.utils import timezone
 from django.db import models
 from django.contrib.auth.models import BaseUserManager, AbstractBaseUser
+from django.utils.translation import gettext_lazy as _
 
 
 # позволяет переписать модель менеджера управляющего моделями БД??
+
+
 class UserManager(BaseUserManager):
     use_in_migrations = True
 
-    def create_user(self, email, full_name, password=None, date_of_birth=datetime.date(2000, 1, 1), avatar=None):
+    def create_user(self, email, full_name=None, password=None, avatar=None):
         if not email:
             raise ValueError('Email must be set')
 
@@ -16,33 +22,30 @@ class UserManager(BaseUserManager):
             email=email,
             full_name=full_name,
             avatar=avatar,
-            date_of_birth=date_of_birth
         )
         user.set_password(password)
         user.save(using=self._db)  # при использовании нескольких
         # баз данных в проекте, параметр using позволит указать в какую БД сохранять модель
         return user
 
-    def create_staffuser(self, email, full_name, password, date_of_birth=datetime.date(2000, 1, 1), avatar=None):
+    def create_staffuser(self, email, password, full_name=None, avatar=None):
         user = self.create_user(
             email=email,
             password=password,
             full_name=full_name,
             avatar=avatar,
-            date_of_birth=date_of_birth
         )
         user.is_staff = True
         user.save(using=self._db)
 
         return user
 
-    def create_superuser(self, email, full_name, password, date_of_birth=datetime.date(2000, 1, 1), avatar=None):
+    def create_superuser(self, email, password, full_name=None, avatar=None):
         user = self.create_user(
             email=email,
             password=password,
             full_name=full_name,
             avatar=avatar,
-            date_of_birth=date_of_birth
         )
         user.set_password(password)
         user.is_staff = True
@@ -52,6 +55,10 @@ class UserManager(BaseUserManager):
         return user
 
 
+def upload_to(instance, filename):
+    return f'user/avatars/{instance}/{filename}'.format(filename=filename)
+
+
 class User(AbstractBaseUser):
     email = models.EmailField(
         verbose_name='email_adress',
@@ -59,26 +66,26 @@ class User(AbstractBaseUser):
         unique=True
     )
     full_name = models.CharField(
-        null=False,
-        blank=False,
+        blank=True,
+        null=True,
         verbose_name='full_name'
     )
     password = models.CharField(
         verbose_name='password'
     )
     avatar = models.ImageField(
-        upload_to='avatars/',
-        null=True,
-        blank=True
+        _("Image"),
+        default='media/user/avatars/default_avatar.svg',
+        upload_to=upload_to,
+        blank=True,
+        null=True
     )
-    date_of_birth = models.DateField(default=datetime.date(2000, 1, 1))
-
     is_active = models.BooleanField(default=True)
     is_staff = models.BooleanField(default=False)
     is_admin = models.BooleanField(default=False)
 
     USERNAME_FIELD = 'email'
-    REQUIRED_FIELDS = ['password', 'full_name']
+    REQUIRED_FIELDS = ['password', ]
 
     objects = UserManager()
 
@@ -88,9 +95,6 @@ class User(AbstractBaseUser):
 
     def get_email(self):
         return self.email
-
-    def get_full_name(self):
-        return self.full_name
 
     def __str__(self):
         return self.email
