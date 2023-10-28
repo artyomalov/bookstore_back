@@ -1,5 +1,7 @@
 __all__ = ['Author', 'Book', 'BookRaiting']
 
+import os.path
+
 from django.db import models
 from django.contrib.auth import get_user_model
 from django.core.validators import MinValueValidator, MaxValueValidator
@@ -18,6 +20,14 @@ class Author(models.Model):
         verbose_name_plural = 'Authors'
 
 
+# def upload_to(instance, filename):
+#     """
+#     return path for saving model's image
+#     """
+#     return f'user/books/{instance.title}/{filename}'.format(
+#         filename=filename)
+
+
 class Book(models.Model):
     title = models.CharField(max_length=255, blank=False, )
     annotation = models.CharField(max_length=4000, blank=False, )
@@ -26,8 +36,9 @@ class Book(models.Model):
 
     price = models.SmallIntegerField(
         blank=False, validators=[MinValueValidator(1)])
-    cover_image = models.ImageField(upload_to=f'covers/{title}', blank=False,
-                                    null=False)
+    cover_image = models.ImageField(
+        upload_to='books/covers/', blank=False,
+        null=False)
     authors = models.ManyToManyField(Author)
     genres = models.ManyToManyField(Genre)
 
@@ -37,6 +48,12 @@ class Book(models.Model):
 
     def __str__(self):
         return self.title
+
+    def save(self, *args, **kwargs):
+        img_name, img_ext = os.path.splitext(self.cover_image.name)
+        new_img_name = f'{self.title}{img_ext}'
+        self.cover_image.name = new_img_name
+        super().save(*args, **kwargs)
 
 
 class BookRaiting(models.Model):
@@ -52,3 +69,13 @@ class BookRaiting(models.Model):
     class Meta:
         verbose_name = 'raiting'
         verbose_name_plural = 'raitings'
+
+class Comment(models.Model):
+    created_at = models.TimeField(auto_now_add=True)
+    comment_text = models.CharField(max_length=4000)
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    book = models.ForeignKey(Book, on_delete=models.CASCADE)
+
+    class Meta:
+        verbose_name = 'comment'
+        verbose_name_plural = 'comments'

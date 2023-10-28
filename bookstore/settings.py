@@ -35,9 +35,10 @@ INSTALLED_APPS = [
     'django_cleanup.apps.CleanupConfig',
 
     'book.apps.BookConfig',
-    'usercart.apps.UsercartConfig',
-    'userfavoritebooks.apps.UserfavoritebooksConfig',
+    'user_cart.apps.UsercartConfig',
+    'user_favourite_books.apps.UserfavoritebooksConfig',
     'genres.apps.GenresConfig',
+    'purchases.apps.PurchasesConfig'
 
 ]
 

@@ -1,13 +1,7 @@
-import datetime
 import os
-import sys
-from django.utils import timezone
 from django.db import models
 from django.contrib.auth.models import BaseUserManager, AbstractBaseUser
 from django.utils.translation import gettext_lazy as _
-
-
-# позволяет переписать модель менеджера управляющего моделями БД??
 
 
 class UserManager(BaseUserManager):
@@ -55,8 +49,11 @@ class UserManager(BaseUserManager):
         return user
 
 
-def upload_to(instance, filename):
-    return f'user/avatars/{instance}/{filename}'.format(filename=filename)
+# def upload_to(instance, filename):
+#     """
+#     return path for saving model's image
+#     """
+#     return f'user/avatars/{instance.email}/{filename}'.format(filename=filename)
 
 
 class User(AbstractBaseUser):
@@ -76,7 +73,8 @@ class User(AbstractBaseUser):
     avatar = models.ImageField(
         _("Image"),
         default='media/user/avatars/default_avatar.svg',
-        upload_to=upload_to,
+        upload_to='user/avatars/',
+        # upload_to=lambda s, f: upload_to(s, f, 'user/avatars/'),
         blank=True,
         null=True
     )
@@ -93,8 +91,8 @@ class User(AbstractBaseUser):
         verbose_name = 'user'
         verbose_name_plural = 'users'
 
-    def get_email(self):
-        return self.email
+    # def get_email(self):
+    #     return self.email
 
     def __str__(self):
         return self.email
@@ -104,3 +102,12 @@ class User(AbstractBaseUser):
 
     def has_module_perms(self, app_label):
         return True
+
+    def save(self, *args, **kwargs):
+        if (self.avatar.name is not None):
+            img_name, img_ext = os.path.splitext(self.avatar.name)
+            new_img_name = f'{self.email}{img_ext}'
+            self.avatar.name = new_img_name
+            super().save(*args, **kwargs)
+            return
+        super().save(*args, **kwargs)

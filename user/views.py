@@ -1,19 +1,21 @@
+from rest_framework import permissions
 from rest_framework.views import APIView
 from rest_framework_simplejwt.authentication import JWTAuthentication
 from .models import User
 from django.http import Http404
-from .serializers import AuthUserSerializer
+from .serializers import AuthorizedUserSerializer
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.parsers import MultiPartParser, FormParser
 from django.conf import settings
-# нужно для валидации пароля, устанавливается отдельно, возвращает true false
 from passlib.apps import django_context
 import os
 
 
 class AuthUserDetail(APIView):
     parser_classes = [MultiPartParser, FormParser]
+    permission_classes = [permissions.AllowAny]
+    authentication_classes = []
 
     def get_id(self, request):
         JWT_authenticator = JWTAuthentication()
@@ -30,9 +32,11 @@ class AuthUserDetail(APIView):
             raise Http404
 
     def get(self, request, format=None):
+
         id = self.get_id(request)
         user = self.get_object(id)
-        serializer = AuthUserSerializer(user, context={'request': request})
+        serializer = AuthorizedUserSerializer(user,
+                                              context={'request': request})
         user_data = {
             'email': serializer.data.get('email', None),
             'fullName': serializer.data.get('full_name', None),
@@ -87,7 +91,8 @@ class AuthUserDetail(APIView):
                 if os.path.exists(path=path_to_old_avatar):
                     os.remove(path_to_old_avatar)
 
-        serializer = AuthUserSerializer(user, data=user_data, partial=True)
+        serializer = AuthorizedUserSerializer(user, data=user_data,
+                                              partial=True)
         if serializer.is_valid():
             serializer.save()
             domain = request.build_absolute_uri('/')[:-1]

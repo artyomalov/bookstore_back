@@ -3,13 +3,15 @@ from rest_framework import serializers
 from django.contrib.auth.hashers import make_password
 from django.contrib.auth.password_validation import validate_password
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
-from usercart.serializers import UserCartSerializer
+from user_cart.models import UserCart
+from purchases.models import UserPurchasesList
+from user_favourite_books.models import UserFavouriteBooks
 
 
-class SingupSerializer(serializers.ModelSerializer):
-    '''
-    Serializer that creates a new user
-    '''
+class SignupSerializer(serializers.ModelSerializer):
+    """
+     Serializer that creates a new user
+     """
 
     class Meta:
         model = User
@@ -17,7 +19,6 @@ class SingupSerializer(serializers.ModelSerializer):
         extra_kwargs = {'password': {'write_only': True}}
 
     def create(self, validated_data):
-
         if validate_password(validated_data['password']) == None:
             password = make_password(validated_data.get('password', None))
 
@@ -26,18 +27,7 @@ class SingupSerializer(serializers.ModelSerializer):
                 password=password,
             )
 
+            UserCart.objects.create(user_id=user)
+            UserPurchasesList.objects.create(user_id=user)
+            UserFavouriteBooks.objects.create(user_id=user)
         return user
-
-
-# class CustromTokenObtainPairSerializer(TokenObtainPairSerializer):
-
-#     def validate(self, attrs):
-#         data = super().validate(attrs)
-#         refresh = self.get_token(self.user)
-#         data['refresh'] = str(refresh)
-#         data['access'] = str(refresh.access_token)
-#         data['email'] = self.user.email
-#         data['full_name'] = self.user.full_name
-#         if self.user.avatar and hasattr(self.user.avater, 'url'):
-#             data['avatar'] = self.user.avatar.url
-#         return data

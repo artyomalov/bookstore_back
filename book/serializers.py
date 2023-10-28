@@ -1,7 +1,7 @@
 __all__ = ['BookRatingSerializer', 'AuthorSerializer', 'BookSerializer']
 
 from rest_framework.serializers import ModelSerializer
-from .models import Book, Author, BookRaiting
+from .models import Book, Author, BookRaiting, Comment
 
 
 class BookRatingSerializer(ModelSerializer):
@@ -26,3 +26,9 @@ class BookSerializer(ModelSerializer):
         model = Book
         fields = ['title', 'annotation', 'in_stock_quantity',
                   'genre', 'price', 'cover_image', 'author', 'raitings']
+
+
+class CommentSerializer(ModelSerializer):
+    class Meta:
+        model = Comment
+        fields = ['created_at', 'comment_text', 'user', 'book']

@@ -1,3 +1,4 @@
+from django.contrib.auth import get_user_model
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.views import TokenRefreshView
 
@@ -6,9 +7,9 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.permissions import AllowAny
-from .serializers import SingupSerializer
+from .serializers import SignupSerializer
 from user.models import User
-from user.serializers import AuthUserSerializer
+from user.serializers import AuthorizedUserSerializer
 from passlib.apps import django_context
 
 
@@ -24,7 +25,7 @@ class SignupAPIView(APIView):
             password = request.data.get('password', None)
             confirm_password = request.data.get('confirm_password', None)
             if password == confirm_password and password is not None:
-                serializer = SingupSerializer(data=request.data)
+                serializer = SignupSerializer(data=request.data)
                 if not serializer.is_valid():
                     raise ValidationError(
                         'This password is too common.',
@@ -41,7 +42,6 @@ class SignupAPIView(APIView):
             return Response(data, status=response)
         except Exception as err:
             data = {'error': err}
-            print(data)
             return Response(data, status=status.HTTP_400_BAD_REQUEST)
 
 
@@ -63,7 +63,6 @@ class CustomTokenObtainPairView(APIView):
         }
 
     def post(self, request):
-        print(request.data)
         password = request.data.get('password', None)
         email = request.data.get('email', None)
         user = self.get_user(email=email)
@@ -79,12 +78,10 @@ class CustomTokenObtainPairView(APIView):
                             status=status.HTTP_401_UNAUTHORIZED)
 
         token_data = self.create_token(user)
-        serializer = AuthUserSerializer(user, context={'request': request})
-        serializer_data = {
-            'email': serializer.data.get('email', None),
-            'fullName': serializer.data.get('full_name', None),
-            'avatar': serializer.data.get('avatar', None)
-        }
+        serializer = AuthorizedUserSerializer(user,
+                                              context={'request': request})
+        data = serializer.data
+        data.pop('password')
         return Response(
-            {'token_data': token_data, 'user_data': serializer_data},
+            {'token_data': token_data, 'user_data': data},
             status=status.HTTP_200_OK)
