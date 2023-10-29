@@ -35,11 +35,7 @@ INSTALLED_APPS = [
     'django_cleanup.apps.CleanupConfig',
 
     'book.apps.BookConfig',
-    'user_cart.apps.UsercartConfig',
-    'user_favourite_books.apps.UserfavoritebooksConfig',
-    'genres.apps.GenresConfig',
-    'purchases.apps.PurchasesConfig'
-
+    'user_staff.apps.UserStaffConfig',
 ]
 
 MIDDLEWARE = [
