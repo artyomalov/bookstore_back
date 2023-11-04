@@ -2,13 +2,40 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from .serializers import BookSerializer
 from rest_framework.permissions import AllowAny
-from .models import Genre
-from .serializers import GenreSerializer
+from .models import Book, Genre
+from .serializers import BookSerializer, GenreSerializer
+from django.http import Http404
 
 
-class GenresAPI(APIView):
+class BookList(APIView):
     """
-    List all genres with related books
+    List all Books.
+    """
+    permission_classes = [AllowAny, ]
+
+    def get(self, request, format=None):
+        books = Book.objects.all()
+        serializer = BookSerializer(books, many=True)
+        return Response(serializer.data)
+
+
+class BookDetail(APIView):
+    permission_classes = [AllowAny, ]
+    def get_book(self, slug):
+        try:
+            return Book.objects.get(slug=slug)
+        except Book.DoesNotExist:
+            raise Http404
+
+    def get(self, request, slug, format=None):
+        book = Book.objects.get(slug=slug)
+        serializer = BookSerializer(book)
+        return Response(serializer.data)
+
+
+class GenresList(APIView):
+    """
+    List all genres.
     """
 
     permission_classes = [AllowAny, ]

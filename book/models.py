@@ -21,13 +21,19 @@ class Book(models.Model):
     """
     Book model. Main model of book app.
     """
-    title = models.CharField(max_length=255, blank=False, )
-    annotation = models.TextField(max_length=4000, blank=False, )
-    quantity = models.IntegerField(
-        default=0, blank=False, validators=[MinValueValidator(0)])
-
-    price = models.IntegerField(
-        blank=False, validators=[MinValueValidator(1)])
+    slug = models.SlugField(max_length=255, unique=True, db_index=True)
+    title = models.CharField(max_length=255, blank=False, null=True)
+    annotation = models.TextField(max_length=4000, blank=False)
+    paperback_quantity = models.IntegerField(default=0, blank=False,
+                                             validators=[
+                                                 MinValueValidator(0)])
+    hardcover_quantity = models.IntegerField(default=0, blank=False,
+                                             validators=[
+                                                 MinValueValidator(0)])
+    paperback_price = models.IntegerField(blank=False,
+                                          validators=[MinValueValidator(1)])
+    hardcover_price = models.IntegerField(blank=False,
+                                          validators=[MinValueValidator(1)])
     cover_image = models.ImageField(
         upload_to='books/covers/', blank=False,
         null=False)
@@ -53,11 +59,10 @@ class Author(models.Model):
     Author's model. Related with book. One book can be related with group of
     authors and one author can be related with many books.
     """
-    first_name = models.CharField(max_length=255, blank=False)
-    last_name = models.CharField(max_length=255, blank=False)
+    name = models.CharField(max_length=255, blank=False)
 
     def __str__(self):
-        return f'{self.first_name} {self.last_name}'
+        return self.name
 
     class Meta:
         verbose_name = 'Author'
@@ -97,7 +102,7 @@ class Comment(models.Model):
     book = models.ForeignKey(Book, on_delete=models.CASCADE)
 
     def __str__(self):
-        return f'comment: {self.id}, {self.user.full_name}'
+        return f'{self.user.email} about {self.book.title}: {self.comment_text}'
 
     class Meta:
         ordering = ['-created_at']
@@ -110,7 +115,7 @@ class Genre(models.Model):
         Describes model of books' genres. It is also filters at client side.
     """
     genre_name = models.CharField(max_length=255, blank=False)
-    slug = models.SlugField(max_length=255, db_index=True)
+    slug = models.SlugField(max_length=255, unique=True, db_index=True)
 
     class Meta:
         verbose_name = 'genre'

@@ -1,8 +1,11 @@
 from django.urls import path
-from .views import GenresAPI
+from .views import GenresList, BookList, BookDetail
 
-app_name = 'genres'
+app_name = 'book_api'
 
 urlpatterns = [
-    path('genres/', GenresAPI.as_view(), )
+    path('book_list/', BookList.as_view()),
+    path('detail/<slug:slug>/', BookDetail.as_view()),
+    path('genres/', GenresList.as_view(),
+         )
 ]

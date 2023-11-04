@@ -8,7 +8,7 @@ urlpatterns = [
     path('api/v1/user/',
          include('authentication.urls', namespace='authentication')),
     path('api/v1/user/', include('user.urls', namespace='single_user_api')),
-    path('api/v1/book/', include('book.urls', namespace='genres_api'),
+    path('api/v1/book/', include('book.urls', namespace='book_api'),
          )
 ]
 
