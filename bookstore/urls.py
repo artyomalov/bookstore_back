@@ -9,7 +9,8 @@ urlpatterns = [
          include('authentication.urls', namespace='authentication')),
     path('api/v1/user/', include('user.urls', namespace='single_user_api')),
     path('api/v1/book/', include('book.urls', namespace='book_api'),
-         )
+         ),
+    path("__debug__/", include("debug_toolbar.urls")),
 ]
 
 urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

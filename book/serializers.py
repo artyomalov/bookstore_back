@@ -2,6 +2,7 @@ __all__ = ['BookSerializer']
 
 from rest_framework import serializers
 from django.contrib.auth import get_user_model
+from django.db.models import Avg, Sum, F
 
 User = get_user_model()
 
@@ -11,12 +12,13 @@ class BookSerializer(serializers.Serializer):
     slug = serializers.SlugField(max_length=255, allow_blank=False)
     title = serializers.CharField(max_length=255, allow_blank=False)
     annotation = serializers.CharField(max_length=4000, allow_blank=False)
-    paperbackQuantity = serializers.IntegerField(default=0)
-    hardcoverQuantity = serializers.IntegerField(default=0)
-    paperbackPrice = serializers.IntegerField(default=0)
-    hardcoverPrice = serializers.IntegerField(default=0)
+    paperbackQuantity = serializers.IntegerField(source='paperback_quantity')
+    hardcoverQuantity = serializers.IntegerField(source='hardcover_quantity')
+    paperbackPrice = serializers.IntegerField(source='paperback_price')
+    hardcoverPrice = serializers.IntegerField(source='hardcover_price')
     coverImage = serializers.ImageField(allow_empty_file=False,
                                         source='cover_image')
+    createdAt = serializers.DateTimeField(source='created_at')
     rating = serializers.SerializerMethodField(method_name='get_rating')
     salesCount = serializers.SerializerMethodField(
         method_name='get_sales_count')
@@ -24,30 +26,27 @@ class BookSerializer(serializers.Serializer):
     # genres = serializers.SerializerMethodField(method_name='get_genres')
     comments = serializers.SerializerMethodField(method_name='get_comments')
 
+    def get_additional_data(self, instance):
+        additional_data_query = instance
+
     def get_rating(self, instance):
         """
         Get common average rating of the book.
         """
-        rating_query = instance.rating_set.all()
-        rating_summ = 0
-        rating_list = []
-        for rate in rating_query:
-            rating_summ += rate.rate
-            rating_list.append(rate.rate)
-        if len(rating_list) != 0:
-            book_rating = rating_summ / len(rating_list)
-            return book_rating
-        return 0
+        rate_dict = instance.rating_set.aggregate(Avg('rate'))
+        if rate_dict.get('rate__avg') is None:
+            return 0
+        return rate_dict.get('rate__avg')
 
     def get_sales_count(self, instance):
         """
         Get common count of book's purchases.
-        Need to add 'bestseller' icon at client side.
+        Is needed to add 'bestseller' icon at client side.
         """
-        sales_count_query = instance.book_purchase.all()
         sales_count = 0
-        for sale in sales_count_query:
-            sales_count += sale.quantity
+        sales_count_dict = instance.book_purchase.aggregate(Sum('quantity'))
+        if sales_count_dict.get('quantity__sum') is not None:
+            sales_count = sales_count_dict.get('quantity__sum')
         return sales_count
 
     def get_authors(self, instance):
@@ -80,19 +79,13 @@ class BookSerializer(serializers.Serializer):
         """
         Get list of book's comments.
         """
-        comments_query = instance.comment_set.all()
-        comments_list = []
-        for comment in comments_query:
-            user = User.objects.get(id=comment.user.id)
-            comment_data = {
-                'id': comment.id,
-                'userName': user.full_name,
-                'createdAt': comment.created_at,
-                'text': comment.comment_text
-            }
-            if comment.user.full_name is None:
-                comment_data['userName'] = user.email
-            comments_list.append(comment_data)
+        comments_list = instance.comment_set.all().values('id',
+                                                          userName=F(
+                                                              'user__full_name'),
+                                                          cratedAt=F(
+                                                              'created_at'),
+                                                          text=F(
+                                                              'comment_text'))
 
         return comments_list
 

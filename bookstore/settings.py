@@ -16,6 +16,9 @@ SECRET_KEY = 'django-insecure-6)%^yr@zz70f%v^(luj&uz$cn@7b!@*b+c0+&)*2vgi7dqonh!
 DEBUG = True
 
 ALLOWED_HOSTS = []
+INTERNAL_IPS = [
+    "127.0.0.1",
+]
 
 # Application definition
 
@@ -33,7 +36,7 @@ INSTALLED_APPS = [
     'user.apps.UserConfig',
     'authentication.apps.AuthenticationConfig',
     'django_cleanup.apps.CleanupConfig',
-
+    'debug_toolbar',
     'book.apps.BookConfig',
     'user_staff.apps.UserStaffConfig',
 ]
@@ -47,6 +50,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'debug_toolbar.middleware.DebugToolbarMiddleware',
 ]
 
 ROOT_URLCONF = 'bookstore.urls'

@@ -30,15 +30,16 @@ class Book(models.Model):
     hardcover_quantity = models.IntegerField(default=0, blank=False,
                                              validators=[
                                                  MinValueValidator(0)])
-    paperback_price = models.IntegerField(blank=False,
-                                          validators=[MinValueValidator(1)])
-    hardcover_price = models.IntegerField(blank=False,
-                                          validators=[MinValueValidator(1)])
+    paperback_price = models.FloatField(blank=False,
+                                        validators=[MinValueValidator(1)])
+    hardcover_price = models.FloatField(blank=False,
+                                        validators=[MinValueValidator(1)])
     cover_image = models.ImageField(
         upload_to='books/covers/', blank=False,
         null=False)
     authors = models.ManyToManyField('Author')
     genres = models.ManyToManyField('Genre')
+    created_at = models.DateTimeField()
 
     class Meta:
         verbose_name = 'book'
