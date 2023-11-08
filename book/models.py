@@ -98,7 +98,7 @@ class Comment(models.Model):
     link to the created comment user and related book.
     """
     comment_text = models.CharField(max_length=4000)
-    created_at = models.TimeField(auto_now_add=True)
+    created_at = models.DateTimeField(auto_now_add=True)
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     book = models.ForeignKey(Book, on_delete=models.CASCADE)
 

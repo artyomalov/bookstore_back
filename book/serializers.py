@@ -79,14 +79,13 @@ class BookSerializer(serializers.Serializer):
         """
         Get list of book's comments.
         """
-        comments_list = instance.comment_set.all().values('id',
-                                                          userName=F(
-                                                              'user__full_name'),
-                                                          cratedAt=F(
-                                                              'created_at'),
-                                                          text=F(
-                                                              'comment_text'))
-
+        comments_list = instance.comment_set.all().values(
+            'id',
+            userName=F('user__full_name'),
+            userAvatar=F('user__avatar'),
+            createdAt=F('created_at'),
+            text=F('comment_text')
+        )
         return comments_list
 
 

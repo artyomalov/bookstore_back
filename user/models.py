@@ -106,7 +106,9 @@ class User(AbstractBaseUser):
     def save(self, *args, **kwargs):
         if (self.avatar.name is not None):
             img_name, img_ext = os.path.splitext(self.avatar.name)
-            new_img_name = f'{self.email}{img_ext}'
+            user_email = self.email
+            undotted_email = str(user_email).replace('.', '')
+            new_img_name = f'{undotted_email}{img_ext}'
             self.avatar.name = new_img_name
             super().save(*args, **kwargs)
             return

@@ -32,8 +32,7 @@ class AuthorizedUserSerializer(serializers.Serializer):
                 'id': book.id,
                 'title': book.title,
                 'authors': [{
-                    'firstName': author.first_name,
-                    'lastName': author.last_name,
+                    'name': author.name,
                 } for author in book.authors.all()],
                 'price': book.price,
                 'coverImage': book.cover_image.url
@@ -51,8 +50,7 @@ class AuthorizedUserSerializer(serializers.Serializer):
             'price': cart_item.book.price,
             'coverImage': cart_item.book.cover_image.url,
             'authors': [{
-                'firstName': author.first_name,
-                'lastName': author.last_name,
+                'name': author.name,
             } for author in cart_item.book.authors.all()],
         } for cart_item in cart_items_query]
 
@@ -65,11 +63,9 @@ class AuthorizedUserSerializer(serializers.Serializer):
             'quantity': purchase_item.quantity,
             'bought_time': purchase_item.bought_time,
             'title': purchase_item.book.title,
-            'price': purchase_item.book.price,
             'coverImage': purchase_item.book.cover_image.url,
             'authors': [{
-                'firstName': author.first_name,
-                'lastName': author.last_name,
+                'name': author.name,
             } for author in purchase_item.book.authors.all()],
         } for purchase_item in user_purchases_query]
 
