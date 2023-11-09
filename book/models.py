@@ -21,25 +21,32 @@ class Book(models.Model):
     """
     Book model. Main model of book app.
     """
-    slug = models.SlugField(max_length=255, unique=True, db_index=True)
-    title = models.CharField(max_length=255, blank=False, null=True)
-    annotation = models.TextField(max_length=4000, blank=False)
+    title = models.CharField(max_length=255, blank=False, null=True,
+                             verbose_name='title')
+    slug = models.SlugField(max_length=255, unique=True, db_index=True,
+                            verbose_name='slug')
+    annotation = models.TextField(max_length=4000, blank=False,
+                                  verbose_name='annotation')
     paperback_quantity = models.IntegerField(default=0, blank=False,
                                              validators=[
-                                                 MinValueValidator(0)])
+                                                 MinValueValidator(0)],
+                                             verbose_name='paperback quantity')
     hardcover_quantity = models.IntegerField(default=0, blank=False,
                                              validators=[
-                                                 MinValueValidator(0)])
+                                                 MinValueValidator(0)],
+                                             verbose_name='hardcover quantity')
     paperback_price = models.FloatField(blank=False,
-                                        validators=[MinValueValidator(1)])
+                                        validators=[MinValueValidator(1)],
+                                        verbose_name='paperback price')
     hardcover_price = models.FloatField(blank=False,
-                                        validators=[MinValueValidator(1)])
+                                        validators=[MinValueValidator(1)],
+                                        verbose_name='hardcover price')
     cover_image = models.ImageField(
         upload_to='books/covers/', blank=False,
-        null=False)
-    authors = models.ManyToManyField('Author')
-    genres = models.ManyToManyField('Genre')
-    created_at = models.DateTimeField()
+        null=False, verbose_name='cover')
+    authors = models.ManyToManyField('Author', verbose_name='authors list')
+    genres = models.ManyToManyField('Genre', verbose_name='genres list')
+    created_at = models.DateTimeField(verbose_name='added to sell list')
 
     class Meta:
         verbose_name = 'book'
@@ -60,7 +67,8 @@ class Author(models.Model):
     Author's model. Related with book. One book can be related with group of
     authors and one author can be related with many books.
     """
-    name = models.CharField(max_length=255, blank=False)
+    name = models.CharField(max_length=255, blank=False,
+                            verbose_name='author\'s name')
 
     def __str__(self):
         return self.name
@@ -78,11 +86,14 @@ class Rating(models.Model):
     rate = models.IntegerField(default=5, blank=False,
                                validators=[
                                    MinValueValidator(1),
-                                   MaxValueValidator(5)])
+                                   MaxValueValidator(5)],
+                               verbose_name='user\'s rate')
     user = models.ForeignKey(
-        User, on_delete=models.SET_NULL, null=True, blank=True)
+        User, on_delete=models.SET_NULL, null=True, blank=True,
+        verbose_name='user rated')
     book = models.ForeignKey(
-        Book, on_delete=models.CASCADE, null=False, blank=False)
+        Book, on_delete=models.CASCADE, null=False, blank=False,
+        verbose_name='rated book')
 
     class Meta:
         verbose_name = 'raiting'
@@ -97,10 +108,13 @@ class Comment(models.Model):
     Singe comment item. Contains creation time, comment text,
     link to the created comment user and related book.
     """
-    comment_text = models.CharField(max_length=4000)
-    created_at = models.DateTimeField(auto_now_add=True)
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
-    book = models.ForeignKey(Book, on_delete=models.CASCADE)
+    comment_text = models.CharField(max_length=4000, verbose_name='comment')
+    created_at = models.DateTimeField(auto_now_add=True,
+                                      verbose_name='created at')
+    user = models.ForeignKey(User, on_delete=models.CASCADE,
+                             verbose_name='left comment user')
+    book = models.ForeignKey(Book, on_delete=models.CASCADE,
+                             verbose_name='commented book')
 
     def __str__(self):
         return f'{self.user.email} about {self.book.title}: {self.comment_text}'
@@ -115,8 +129,10 @@ class Genre(models.Model):
     """
         Describes model of books' genres. It is also filters at client side.
     """
-    genre_name = models.CharField(max_length=255, blank=False)
-    slug = models.SlugField(max_length=255, unique=True, db_index=True)
+    genre_name = models.CharField(max_length=255, blank=False,
+                                  verbose_name='genre')
+    slug = models.SlugField(max_length=255, unique=True, db_index=True,
+                            verbose_name='genre slug')
 
     class Meta:
         verbose_name = 'genre'

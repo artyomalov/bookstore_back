@@ -58,7 +58,7 @@ class UserManager(BaseUserManager):
 
 class User(AbstractBaseUser):
     email = models.EmailField(
-        verbose_name='email_adress',
+        verbose_name='email',
         max_length=255,
         unique=True
     )
@@ -71,16 +71,15 @@ class User(AbstractBaseUser):
         verbose_name='password'
     )
     avatar = models.ImageField(
-        _("Image"),
         default='media/user/avatars/default_avatar.svg',
         upload_to='user/avatars/',
-        # upload_to=lambda s, f: upload_to(s, f, 'user/avatars/'),
         blank=True,
-        null=True
+        null=True,
+        verbose_name='avatar'
     )
-    is_active = models.BooleanField(default=True)
-    is_staff = models.BooleanField(default=False)
-    is_admin = models.BooleanField(default=False)
+    is_active = models.BooleanField(default=True, verbose_name='active')
+    is_staff = models.BooleanField(default=False, verbose_name='staff')
+    is_admin = models.BooleanField(default=False, verbose_name='admin')
 
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = ['password', ]

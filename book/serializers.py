@@ -14,8 +14,8 @@ class BookSerializer(serializers.Serializer):
     annotation = serializers.CharField(max_length=4000, allow_blank=False)
     paperbackQuantity = serializers.IntegerField(source='paperback_quantity')
     hardcoverQuantity = serializers.IntegerField(source='hardcover_quantity')
-    paperbackPrice = serializers.IntegerField(source='paperback_price')
-    hardcoverPrice = serializers.IntegerField(source='hardcover_price')
+    paperbackPrice = serializers.FloatField(source='paperback_price')
+    hardcoverPrice = serializers.FloatField(source='hardcover_price')
     coverImage = serializers.ImageField(allow_empty_file=False,
                                         source='cover_image')
     createdAt = serializers.DateTimeField(source='created_at')
@@ -96,20 +96,53 @@ class GenreSerializer(serializers.Serializer):
                                       source='genre_name')
     slug = serializers.SlugField(max_length=255)
 
-# FICTION = 'fiction'
-# NON_FICTION = 'non_fiction'
-# LIGHT_FICTION = 'light_fiction'
-# SCIENCE_FICTION = 'science_fiction'
-# FANTASY = 'fantasy'
-# BUSINESS_FINANCE = 'business_finance'
-# POLITICS = 'politics'
-# TREAVEL_BOOKS = 'travel_books'
-# AUTOBIOGRAPHY = 'autobiography'
-# HISTORY = 'history'
-# THRILLER_MYSTERY = 'thriller_Mystery'
-# ROMANCE = 'romance'
-# SATIRE = 'satire'
-# HORROR = 'horror'
-# HEALTH_MEDICINE = 'health_medicine'
-# CHILDEREN_BOOKS = 'childrens_books'
-# ENCYCLOPEDIA = 'encyclopedia'
+# Fiction
+# fiction
+
+# Non-fiction
+# non_fiction
+
+# Light fiction
+# light_fiction
+
+# Science-fiction
+# science_fiction
+
+# Fantasy
+# fantasy
+
+# Business & finance
+# business_finance
+
+# Politics
+# politics
+
+# Travel books
+# travel_books
+
+# Autobiography
+# autobiography
+
+# History
+# history
+
+# Thriller/Mystery
+# thriller_mystery
+
+# Romance
+# romance
+
+# Satire
+# satire
+
+# Horror
+# horror
+
+# Health\medicine
+# health_medicine
+
+# Children's books
+# children_books
+
+# Encyclopedia
+# encyclopedia

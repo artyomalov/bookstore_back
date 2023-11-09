@@ -12,14 +12,14 @@ class UserFavouriteBooks(models.Model):
     """
 
     user_id = models.OneToOneField(User, on_delete=models.CASCADE,
-                                   related_name='favourite',
-                                   null=True)
+                                   related_name='favorite',
+                                   null=True, verbose_name='related user')
     user_liked_books = models.ManyToManyField(
-        Book, blank=True)
+        Book, blank=True, verbose_name='liked books list')
 
     class Meta:
-        verbose_name = 'favourite'
-        verbose_name_plural = 'favourite'
+        verbose_name = 'favorite'
+        verbose_name_plural = 'favorite'
 
 
 class UserCart(models.Model):
@@ -28,7 +28,8 @@ class UserCart(models.Model):
     """
 
     user_id = models.OneToOneField(User, on_delete=models.CASCADE,
-                                   related_name='cart')
+                                   related_name='cart',
+                                   verbose_name='related user')
 
     class Meta:
         verbose_name = 'cart'
@@ -42,11 +43,14 @@ class CartItem(models.Model):
     """
 
     user_cart = models.ForeignKey(
-        UserCart, on_delete=models.CASCADE, related_name='cart_item')
+        UserCart, on_delete=models.CASCADE, related_name='cart_item',
+        verbose_name='user\'s cart')
     book = models.ForeignKey(
-        Book, on_delete=models.CASCADE, null=False, related_name='book_cart')
+        Book, on_delete=models.CASCADE, null=False, related_name='book_cart',
+        verbose_name='stored book')
     quantity = models.IntegerField(default=1, validators=[
-        MinValueValidator(1), MaxValueValidator(99)])
+        MinValueValidator(1), MaxValueValidator(99)],
+                                   verbose_name='stored quantity')
 
     class Meta:
         verbose_name = 'cart item'
@@ -59,11 +63,12 @@ class UserPurchasesList(models.Model):
     """
 
     user_id = models.OneToOneField(User, on_delete=models.CASCADE,
-                                   related_name='purchases')
+                                   related_name='purchases',
+                                   verbose_name='related user')
 
     class Meta:
-        verbose_name = 'user_purchases_list'
-        verbose_name_plural = 'users_purchases_lists'
+        verbose_name = 'user purchases list'
+        verbose_name_plural = 'users purchases lists'
 
 
 class PurchaseItem(models.Model):
@@ -75,13 +80,17 @@ class PurchaseItem(models.Model):
 
     user_cart = models.ForeignKey(
         UserPurchasesList, on_delete=models.CASCADE,
-        related_name='purchase_item'
+        related_name='purchase_item',
+        verbose_name='related list of user\'s purchases'
     )
     book = models.ForeignKey(Book, on_delete=models.CASCADE, null=False,
-                             related_name='book_purchase')
+                             related_name='book_purchase',
+                             verbose_name='bought book')
     quantity = models.IntegerField(
-        validators=[MinValueValidator(1), MaxValueValidator(99)])
-    bought_time = models.DateTimeField(auto_now_add=True)
+        validators=[MinValueValidator(1), MaxValueValidator(99)],
+        verbose_name='bought quantity')
+    bought_time = models.DateTimeField(auto_now_add=True,
+                                       verbose_name='bought time')
 
     class Meta:
         verbose_name = 'purchase item'
