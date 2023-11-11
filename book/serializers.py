@@ -26,8 +26,6 @@ class BookSerializer(serializers.Serializer):
     # genres = serializers.SerializerMethodField(method_name='get_genres')
     comments = serializers.SerializerMethodField(method_name='get_comments')
 
-    def get_additional_data(self, instance):
-        additional_data_query = instance
 
     def get_rating(self, instance):
         """
@@ -86,6 +84,7 @@ class BookSerializer(serializers.Serializer):
             createdAt=F('created_at'),
             text=F('comment_text')
         )
+
         return comments_list
 
 

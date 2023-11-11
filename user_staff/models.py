@@ -6,7 +6,7 @@ from book.models import Book
 User = get_user_model()
 
 
-class UserFavouriteBooks(models.Model):
+class UserLikedBooks(models.Model):
     """
     List of user's favourite books.
     """
@@ -48,6 +48,8 @@ class CartItem(models.Model):
     book = models.ForeignKey(
         Book, on_delete=models.CASCADE, null=False, related_name='book_cart',
         verbose_name='stored book')
+    # cover_type =
+
     quantity = models.IntegerField(default=1, validators=[
         MinValueValidator(1), MaxValueValidator(99)],
                                    verbose_name='stored quantity')
@@ -78,9 +80,9 @@ class PurchaseItem(models.Model):
     and related book's model
     """
 
-    user_cart = models.ForeignKey(
+    user_purchases_list = models.ForeignKey(
         UserPurchasesList, on_delete=models.CASCADE,
-        related_name='purchase_item',
+        related_name='purchase_items',
         verbose_name='related list of user\'s purchases'
     )
     book = models.ForeignKey(Book, on_delete=models.CASCADE, null=False,

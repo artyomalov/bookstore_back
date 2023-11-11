@@ -43,6 +43,7 @@ class CommentAdmin(admin.ModelAdmin):
     list_display = ('id', 'user', 'book', 'created_at',)
     list_display_links = ('id', 'created_at',)
     list_per_page = 20
+    ordering = ('id',)
 
 
 @admin.register(Genre)

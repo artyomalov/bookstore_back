@@ -63,8 +63,8 @@ class CustomTokenObtainPairView(APIView):
         }
 
     def post(self, request):
-        password = request.data.get('password', None)
-        email = request.data.get('email', None)
+        password = request.data.get('password')
+        email = request.data.get('email')
         user = self.get_user(email=email)
         if user == None:
             print('<<<<<<<<<<<<<User does not exist>>>>>>>>>>>>>')
@@ -81,7 +81,6 @@ class CustomTokenObtainPairView(APIView):
         serializer = AuthorizedUserSerializer(user,
                                               context={'request': request})
         data = serializer.data
-        data.pop('password')
         return Response(
             {'token_data': token_data, 'user_data': data},
             status=status.HTTP_200_OK)

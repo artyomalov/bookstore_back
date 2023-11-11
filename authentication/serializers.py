@@ -3,7 +3,7 @@ from rest_framework import serializers
 from django.contrib.auth.hashers import make_password
 from django.contrib.auth.password_validation import validate_password
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
-from user_staff.models import UserCart, UserPurchasesList, UserFavouriteBooks
+from user_staff.models import UserCart, UserPurchasesList, UserLikedBooks
 
 
 class SignupSerializer(serializers.ModelSerializer):
@@ -27,5 +27,5 @@ class SignupSerializer(serializers.ModelSerializer):
 
             UserCart.objects.create(user_id=user)
             UserPurchasesList.objects.create(user_id=user)
-            UserFavouriteBooks.objects.create(user_id=user)
+            UserLikedBooks.objects.create(user_id=user)
         return user

@@ -10,6 +10,7 @@ urlpatterns = [
     path('api/v1/user/', include('user.urls', namespace='single_user_api')),
     path('api/v1/book/', include('book.urls', namespace='book_api'),
          ),
+    path('api/v1/staff/', include('user_staff.urls')),
     path("__debug__/", include("debug_toolbar.urls")),
 ]
 
