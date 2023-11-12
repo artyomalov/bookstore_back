@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import UserLikedBooks, CartItem
+from .models import UserLikedBooks, CartItem, PurchaseItem
 from book.models import Book
 from django.db.models import F
 
@@ -7,11 +7,11 @@ from django.db.models import F
 class UserLikedBooksSerializer(serializers.Serializer):
     id = serializers.IntegerField(read_only=True)
     user_liked_books = serializers.SerializerMethodField(
-        method_name='get_liked_books')
+        method_name='get_liked_books', required=False)
 
     def get_liked_books(self, instance: UserLikedBooks):
         print(instance)
-        get_favorite_books_query = instance.user_liked_books.all()
+        get_liked_books_query = instance.user_liked_books.all()
 
         return [{
             'id': book.id,
@@ -23,12 +23,13 @@ class UserLikedBooksSerializer(serializers.Serializer):
             'hardcoverPrice': book.hardcover_price,
             'paperbackPrice': book.paperback_price,
             'coverImage': book.cover_image.url
-        } for book in get_favorite_books_query]
+        } for book in get_liked_books_query]
 
     def update(self, instance: UserLikedBooks, validated_data):
-        book_slug = validated_data.get('book_slug')
-        book = Book.objects.get(slug=book_slug)
-        operation_type = validated_data.get('operation_type')
+        book_slug = self.context.get('book_slug')
+        print(book_slug)
+        book = Book.objects.filter(slug=book_slug)[0]
+        operation_type = self.context.get('operation_type')
         if operation_type == 'add':
             instance.user_liked_books.add(book)
         else:
@@ -60,7 +61,11 @@ class UserCartSerializer(serializers.Serializer):
         if operation_type == 'add':
             book_slug = validated_data.get('book_slug')
             book = Book.objects.get(slug=book_slug)
-            cart_item = CartItem.objects.create(instance, book, 1)
+            cart_item = CartItem.objects.create(user_cart=instance,
+                                                book=book,
+                                                cover_type='hardcover',
+                                                quantity=1,
+                                                )
             cart_item.save()
         else:
             cart_item_id = validated_data.get('cart_item_id')
@@ -71,31 +76,40 @@ class UserCartSerializer(serializers.Serializer):
 
 class CartItemSerializer(serializers.Serializer):
     id = serializers.IntegerField(read_only=True)
-    quantity = serializers.IntegerField()
     relatedUserEmail = serializers.SerializerMethodField(
-        method_name='get_related_user_email')
-    book = serializers.SerializerMethodField(method_name='get_book')
+        method_name='get_related_user_email', required=False)
+    book = serializers.SerializerMethodField(method_name='get_book',
+                                             required=False)
+    coverType = serializers.CharField(max_length=9, required=False,
+                                      source='cover_type')
+    quantity = serializers.IntegerField(allow_null=True, required=False)
 
     def get_related_user_email(self, instance: CartItem):
         return instance.user_cart.user_id.email
 
     def update(self, instance: CartItem, validated_data):
-        if validated_data.get('operation_type') == 'increase':
-            # instance.book
-            instance.quantity = F('quantity') + 1
-            instance.save()
-            return instance
-        if validated_data.get('operation_type') == 'decrease':
-            instance.quantity = 0 \
-                if instance.quantity == 0 \
-                else F('quantity') - 1
+        if self.context.get('operation_type') == 'increase':
+            book_quantity = instance.book.hardcover_quantity \
+                if instance.cover_type == 'hardcover' \
+                else instance.book.paperback_quantity
 
+            probably_quantity = instance.quantity + 1
+            if probably_quantity <= book_quantity:
+                instance.quantity = probably_quantity
+                instance.save()
 
-def get_book(self, instance: CartItem):
-    book = {'bookId': instance.book.id,
-            'bookTitle': instance.book.title,
-            'bookSlug': instance.book.slug}
-    return book
+        if self.context.get('operation_type') == 'decrease':
+            probably_quantity = instance.quantity - 1
+            if probably_quantity > 0:
+                instance.quantity = probably_quantity
+                instance.save()
+        return instance
+
+    def get_book(self, instance: CartItem):
+        book = {'bookId': instance.book.id,
+                'bookTitle': instance.book.title,
+                'bookSlug': instance.book.slug}
+        return book
 
 
 class UserPurchasesListSerializer(serializers.Serializer):
@@ -119,7 +133,13 @@ class UserPurchasesListSerializer(serializers.Serializer):
 
     def update(self, instance, validated_data):
         cart_items_ids = validated_data.get('cart_items_ids')
-        cart_items = CartItem.objects.filter(pk__list=[*cart_items_ids])
-        # возможно придётся конвертировать crt_items в список
-        instance.purchase_items.set(cart_items)
+        cart_items_query = CartItem.objects.filter(pk__list=[*cart_items_ids])
+        for cart_item in cart_items_query:
+            purchase_item = PurchaseItem.objects.create(
+                user_purchases_list=instance, book=cart_item.book,
+                quantity=cart_item.quantity,
+                cover_type=cart_item.cover_type
+            )
+            instance.purchase_items.add(purchase_item)
+        cart_items_query = CartItem.objects.filter(pk__list=[*cart_items_ids])
         return {'added': 'OK'}
