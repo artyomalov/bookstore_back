@@ -5,12 +5,18 @@ from django.db.models import F
 
 
 class UserLikedBooksSerializer(serializers.Serializer):
+    """
+    Returns list of user's liked books.
+    Always get only one instance, many=True for this serializers is
+    restricted.
+    Also need to pass book_slug:slug and added_to_favorite:boolean as context.
+    """
     id = serializers.IntegerField(read_only=True)
     user_liked_books = serializers.SerializerMethodField(
         method_name='get_liked_books', required=False)
 
     def get_liked_books(self, instance: UserLikedBooks):
-        print(instance)
+
         get_liked_books_query = instance.user_liked_books.all()
 
         return [{
@@ -27,17 +33,32 @@ class UserLikedBooksSerializer(serializers.Serializer):
 
     def update(self, instance: UserLikedBooks, validated_data):
         book_slug = self.context.get('book_slug')
-        print(book_slug)
         book = Book.objects.filter(slug=book_slug)[0]
-        operation_type = self.context.get('operation_type')
-        if operation_type == 'add':
+        added_to_favorite = self.context.get('added_to_favorite')
+        if added_to_favorite is True:
             instance.user_liked_books.add(book)
         else:
             instance.user_liked_books.remove(book)
-        return book.id
+        return instance
 
 
 class UserCartSerializer(serializers.Serializer):
+    """
+    Returns list of user's cart items(book data, quantity of required books
+    and type of cover.
+    Always get only one instance, many=True for this serializers is
+    restricted.
+    Also need to pass as serializer context:
+    Operation type:str.
+    If operation type is 'add':
+        need to provide as context:
+        - book_slug:slug
+        - cover_type:string (hardcover/paperback)
+        - quantity:int (number of books that will be bought, default is 1.
+    If operation type is 'delete':
+        need to provide as context:
+        - cart_item_id:number (id of cart item that will be deleted).
+    """
     id = serializers.IntegerField(read_only=True)
     userCart = serializers.SerializerMethodField(method_name='get_cart')
 
@@ -57,21 +78,24 @@ class UserCartSerializer(serializers.Serializer):
         return user_cart
 
     def update(self, instance, validated_data):
-        operation_type = validated_data.get('operation_type')
+        operation_type = self.context.get('operation_type')
+        cover_type = self.context.get(
+            'operation_type') if self.context.get(
+            'operation_type') is not None else 'hardcover'
         if operation_type == 'add':
-            book_slug = validated_data.get('book_slug')
+            book_slug = self.context.get('book_slug')
             book = Book.objects.get(slug=book_slug)
             cart_item = CartItem.objects.create(user_cart=instance,
                                                 book=book,
-                                                cover_type='hardcover',
+                                                cover_type=cover_type,
                                                 quantity=1,
                                                 )
             cart_item.save()
-        else:
-            cart_item_id = validated_data.get('cart_item_id')
-            cart_item = instance.cart_item.get(pk=cart_item_id)
-            instance.remove(cart_item)
-        return cart_item
+            return instance
+        if operation_type == 'delete':
+            cart_item_id = self.context.get('cart_item_id')
+            CartItem.objects.get(pk=cart_item_id).delete()
+            return instance
 
 
 class CartItemSerializer(serializers.Serializer):
@@ -117,7 +141,7 @@ class UserPurchasesListSerializer(serializers.Serializer):
     purchases = serializers.SerializerMethodField(method_name='get_purchases')
 
     def get_purchases(self, instance):
-        user_purchases_query = instance.purchases.purchase_item.all()
+        user_purchases_query = instance.purchase_items.all()
 
         purchase_items = [{
             'quantity': purchase_item.quantity,
@@ -132,8 +156,8 @@ class UserPurchasesListSerializer(serializers.Serializer):
         return purchase_items
 
     def update(self, instance, validated_data):
-        cart_items_ids = validated_data.get('cart_items_ids')
-        cart_items_query = CartItem.objects.filter(pk__list=[*cart_items_ids])
+        cart_items_ids = self.context.get('cart_items_ids')
+        cart_items_query = CartItem.objects.filter(pk__in=[*cart_items_ids])
         for cart_item in cart_items_query:
             purchase_item = PurchaseItem.objects.create(
                 user_purchases_list=instance, book=cart_item.book,
@@ -141,5 +165,5 @@ class UserPurchasesListSerializer(serializers.Serializer):
                 cover_type=cart_item.cover_type
             )
             instance.purchase_items.add(purchase_item)
-        cart_items_query = CartItem.objects.filter(pk__list=[*cart_items_ids])
-        return {'added': 'OK'}
+        cart_items_query.delete()
+        return instance
