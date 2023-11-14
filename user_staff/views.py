@@ -19,7 +19,7 @@ class UserLikedBooksAPI(APIView):
         liked_books = UserLikedBooks.objects.filter(user_id__id=id)[0]
         context = {
             'book_slug': request.data.get('bookSlug'),
-            'added_to_favorite': request.data.get('added_to_favorite')
+            'added_to_liked': request.data.get('liked')
         }
         serializer = UserLikedBooksSerializer(instance=liked_books,
                                               data={'id': id,
@@ -27,7 +27,7 @@ class UserLikedBooksAPI(APIView):
                                               context=context)
         if serializer.is_valid():
             serializer.save()
-            return Response(serializer.data)
+            return Response({'added': True}, status=status.HTTP_200_OK)
         return Response(serializer.errors,
                         status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
@@ -59,9 +59,11 @@ class UserCartAPI(APIView):
             }
         serializer = UserCartSerializer(instance=cart, data=data,
                                         context=context)
+        response = {'completed': 'adding'} if request.data.get(
+            'operationType') == 'add' else {'completed': 'removal'}
         if serializer.is_valid():
             serializer.save()
-            return Response(serializer.data, status=status.HTTP_200_OK)
+            return Response(response, status=status.HTTP_200_OK)
         return Response(serializer.errors,
                         status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
@@ -72,8 +74,8 @@ class CartItemAPI(APIView):
     def put(self, request, id, format=None):
         cart_item = CartItem.objects.get(pk=id)
         operation_type = request.data.get(
-            'operation_type') if request.data.get(
-            'operation_type') is not None else 'increase'
+            'operationType') if request.data.get(
+            'operationType') is not None else 'increase'
         data = {
             'id': cart_item.id,
             'relatedUserEmail': cart_item.user_cart.user_id.email,
@@ -86,7 +88,7 @@ class CartItemAPI(APIView):
                                         data=data)
         if serializer.is_valid():
             serializer.save()
-            return Response(serializer.data, status=status.HTTP_200_OK)
+            return Response({'updated': True}, status=status.HTTP_200_OK)
         return Response(serializer.errors,
                         status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 

@@ -1,7 +1,7 @@
 from rest_framework import serializers
-from .models import UserLikedBooks, CartItem, PurchaseItem
+from .models import UserLikedBooks, UserCart, CartItem, UserPurchasesList, \
+    PurchaseItem
 from book.models import Book
-from django.db.models import F
 
 
 class UserLikedBooksSerializer(serializers.Serializer):
@@ -9,7 +9,7 @@ class UserLikedBooksSerializer(serializers.Serializer):
     Returns list of user's liked books.
     Always get only one instance, many=True for this serializers is
     restricted.
-    Also need to pass book_slug:slug and added_to_favorite:boolean as context.
+    Also need to pass book_slug:slug and added_to_liked:boolean as context.
     """
     id = serializers.IntegerField(read_only=True)
     user_liked_books = serializers.SerializerMethodField(
@@ -22,6 +22,7 @@ class UserLikedBooksSerializer(serializers.Serializer):
         return [{
             'id': book.id,
             'title': book.title,
+            'slug': book.slug,
             'authors': [{
                 'id': author.id,
                 'name': author.name,
@@ -34,7 +35,7 @@ class UserLikedBooksSerializer(serializers.Serializer):
     def update(self, instance: UserLikedBooks, validated_data):
         book_slug = self.context.get('book_slug')
         book = Book.objects.filter(slug=book_slug)[0]
-        added_to_favorite = self.context.get('added_to_favorite')
+        added_to_favorite = self.context.get('added_to_liked')
         if added_to_favorite is True:
             instance.user_liked_books.add(book)
         else:
@@ -62,7 +63,7 @@ class UserCartSerializer(serializers.Serializer):
     id = serializers.IntegerField(read_only=True)
     userCart = serializers.SerializerMethodField(method_name='get_cart')
 
-    def get_cart(self, instance):
+    def get_cart(self, instance: UserCart):
         cart_items_query = instance.cart_item.all()
         user_cart = [{
             'id': cart_item.id,
@@ -77,7 +78,7 @@ class UserCartSerializer(serializers.Serializer):
         } for cart_item in cart_items_query]
         return user_cart
 
-    def update(self, instance, validated_data):
+    def update(self, instance: UserCart, validated_data):
         operation_type = self.context.get('operation_type')
         cover_type = self.context.get(
             'operation_type') if self.context.get(
@@ -92,7 +93,7 @@ class UserCartSerializer(serializers.Serializer):
                                                 )
             cart_item.save()
             return instance
-        if operation_type == 'delete':
+        if operation_type == 'remove':
             cart_item_id = self.context.get('cart_item_id')
             CartItem.objects.get(pk=cart_item_id).delete()
             return instance
@@ -140,7 +141,7 @@ class UserPurchasesListSerializer(serializers.Serializer):
     id = serializers.IntegerField(read_only=True)
     purchases = serializers.SerializerMethodField(method_name='get_purchases')
 
-    def get_purchases(self, instance):
+    def get_purchases(self, instance: UserPurchasesList):
         user_purchases_query = instance.purchase_items.all()
 
         purchase_items = [{
@@ -155,7 +156,7 @@ class UserPurchasesListSerializer(serializers.Serializer):
 
         return purchase_items
 
-    def update(self, instance, validated_data):
+    def update(self, instance: UserPurchasesList, validated_data):
         cart_items_ids = self.context.get('cart_items_ids')
         cart_items_query = CartItem.objects.filter(pk__in=[*cart_items_ids])
         for cart_item in cart_items_query:
