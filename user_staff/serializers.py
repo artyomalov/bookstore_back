@@ -16,9 +16,7 @@ class UserLikedBooksSerializer(serializers.Serializer):
         method_name='get_liked_books', required=False)
 
     def get_liked_books(self, instance: UserLikedBooks):
-
         get_liked_books_query = instance.user_liked_books.all()
-
         return [{
             'id': book.id,
             'title': book.title,
@@ -34,12 +32,13 @@ class UserLikedBooksSerializer(serializers.Serializer):
 
     def update(self, instance: UserLikedBooks, validated_data):
         book_slug = self.context.get('book_slug')
-        book = Book.objects.filter(slug=book_slug)[0]
-        added_to_favorite = self.context.get('added_to_liked')
-        if added_to_favorite is True:
-            instance.user_liked_books.add(book)
-        else:
+        liked_exists = instance.user_liked_books.filter(
+            slug=book_slug).exists()
+        book = Book.objects.get(slug=book_slug)
+        if liked_exists is True:
             instance.user_liked_books.remove(book)
+        if liked_exists is False:
+            instance.user_liked_books.add(book)
         return instance
 
 
@@ -69,10 +68,11 @@ class UserCartSerializer(serializers.Serializer):
             'id': cart_item.id,
             'quantity': cart_item.quantity,
             'title': cart_item.book.title,
-            'hardcoverPrice': cart_item.book.hardcover_price,
-            'paperbackPrice': cart_item.book.paperback_price,
+            'coverType': cart_item.cover_type,
             'coverImage': cart_item.book.cover_image.url,
+            'price': cart_item.price,
             'authors': [{
+                'id': author.id,
                 'name': author.name,
             } for author in cart_item.book.authors.all()],
         } for cart_item in cart_items_query]
@@ -101,13 +101,12 @@ class UserCartSerializer(serializers.Serializer):
 
 class CartItemSerializer(serializers.Serializer):
     id = serializers.IntegerField(read_only=True)
-    relatedUserEmail = serializers.SerializerMethodField(
-        method_name='get_related_user_email', required=False)
     book = serializers.SerializerMethodField(method_name='get_book',
                                              required=False)
     coverType = serializers.CharField(max_length=9, required=False,
                                       source='cover_type')
     quantity = serializers.IntegerField(allow_null=True, required=False)
+    price = serializers.IntegerField()
 
     def get_related_user_email(self, instance: CartItem):
         return instance.user_cart.user_id.email
@@ -145,13 +144,16 @@ class UserPurchasesListSerializer(serializers.Serializer):
         user_purchases_query = instance.purchase_items.all()
 
         purchase_items = [{
+            'id': purchase_item.id,
             'quantity': purchase_item.quantity,
-            'bought_time': purchase_item.bought_time,
             'title': purchase_item.book.title,
             'coverImage': purchase_item.book.cover_image.url,
+            'coverType': purchase_item.cover_type,
+            'price': purchase_item.price,
             'authors': [{
                 'name': author.name,
             } for author in purchase_item.book.authors.all()],
+            'boughtTime': purchase_item.bought_time,
         } for purchase_item in user_purchases_query]
 
         return purchase_items

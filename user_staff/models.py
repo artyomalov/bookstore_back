@@ -62,6 +62,7 @@ class CartItem(models.Model):
     quantity = models.IntegerField(default=1, validators=[
         MinValueValidator(1), MaxValueValidator(99)],
                                    verbose_name='stored quantity')
+    price = models.IntegerField(default=19.99)
 
     def is_upperclass(self):
         return self.cover_type in {self.PAPERBACK, self.HARDCOVER}
@@ -116,6 +117,7 @@ class PurchaseItem(models.Model):
         verbose_name='bought quantity')
     cover_type = models.CharField(max_length=9, choices=COVER_CHOICES,
                                   default=HARDCOVER)
+    price = models.IntegerField(default=19.99)
     bought_time = models.DateTimeField(auto_now_add=True,
                                        verbose_name='bought time')
 

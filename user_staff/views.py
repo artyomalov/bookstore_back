@@ -5,29 +5,49 @@ from .models import UserLikedBooks, UserCart, UserPurchasesList, CartItem
 from .serializers import UserLikedBooksSerializer, UserCartSerializer, \
     CartItemSerializer, UserPurchasesListSerializer
 from rest_framework.permissions import AllowAny
+import services
 
 
 class UserLikedBooksAPI(APIView):
     permission_classes = [AllowAny, ]
 
     def get(self, request, id, format=None):
-        liked_books = UserLikedBooks.objects.filter(user_id__id=id)[0]
+        liked_books = UserLikedBooks.objects.get(user_id__id=id)
         serializer = UserLikedBooksSerializer(liked_books)
         return Response(serializer.data)
 
     def put(self, request, id, format=None):
-        liked_books = UserLikedBooks.objects.filter(user_id__id=id)[0]
-        context = {
-            'book_slug': request.data.get('bookSlug'),
-            'added_to_liked': request.data.get('liked')
-        }
+        liked_books = UserLikedBooks.objects.get(user_id__id=id)
+        book_slug = request.data.get('bookSlug')
         serializer = UserLikedBooksSerializer(instance=liked_books,
                                               data={'id': id,
                                                     'user_liked_books': liked_books.user_liked_books},
-                                              context=context)
+                                              context={
+                                                  'book_slug': book_slug,
+                                              })
         if serializer.is_valid():
             serializer.save()
-            return Response({'added': True}, status=status.HTTP_200_OK)
+            addedBook = services.find_dict_in_list(find_by='slug',
+                                                   find_value=book_slug,
+                                                   array=serializer.data.get(
+                                                       'user_liked_books'))
+            if addedBook is not None:
+                return Response(addedBook, status=status.HTTP_200_OK)
+            response_deleted = {
+                "id": 0,
+                "title": "deleted",
+                "slug": "deleted",
+                "authors": [
+                    {
+                        "id": 0,
+                        "name": "deleted"
+                    },
+                ],
+                "hardcoverPrice": 0,
+                "paperbackPrice": 0,
+                "coverImage": "deleted"
+            }
+            return Response(response_deleted, status=status.HTTP_200_OK)
         return Response(serializer.errors,
                         status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
@@ -36,12 +56,12 @@ class UserCartAPI(APIView):
     permission_classes = [AllowAny, ]
 
     def get(self, request, id, format=None):
-        cart = UserCart.objects.filter(user_id__id=id)[0]
+        cart = UserCart.objects.get(user_id__id=id)
         serializer = UserCartSerializer(cart)
         return Response(serializer.data)
 
     def put(self, request, id, format=None):
-        cart = UserCart.objects.filter(user_id__id=id)[0]
+        cart = UserCart.objects.get(user_id__id=id)
         data = {
             'id': cart.id,
             'userCart': cart.cart_item.all()
@@ -51,6 +71,7 @@ class UserCartAPI(APIView):
                 'operation_type': request.data.get('operationType'),
                 'book_slug': request.data.get('bookSlug'),
                 'cover_type': request.data.get('coverType'),
+                'price': request.data.get('price')
             }
         else:
             context = {
@@ -97,12 +118,12 @@ class UserPurchasesAPI(APIView):
     permission_classes = [AllowAny, ]
 
     def get(self, request, id, format=None):
-        purchases_list = UserPurchasesList.objects.filter(user_id__id=id)[0]
+        purchases_list = UserPurchasesList.objects.get(user_id__id=id)
         serializer = UserPurchasesListSerializer(purchases_list)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
     def put(self, request, id, format=None):
-        purchases_list = UserPurchasesList.objects.filter(user_id__id=id)[0]
+        purchases_list = UserPurchasesList.objects.get(user_id__id=id)
         data = {
             'id': purchases_list.id,
             'purchases': purchases_list.purchase_items.all()
