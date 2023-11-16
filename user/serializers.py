@@ -10,6 +10,12 @@ class AuthorizedUserSerializer(serializers.Serializer):
                                      source='full_name')
     email = serializers.EmailField(max_length=255)
     avatar = Base64ImageField(required=False, allow_null=True)
+    userLikedId = serializers.SerializerMethodField(read_only=True,
+                                                    method_name='get_liked_id')
+    userCartId = serializers.SerializerMethodField(read_only=True,
+                                                   method_name='get_cart_id')
+    userPurchasesId = serializers.SerializerMethodField(read_only=True,
+                                                        method_name='get_purchases_id')
 
     def update(self, instance: User, validated_data):
         instance.full_name = validated_data.get('full_name',
@@ -18,6 +24,14 @@ class AuthorizedUserSerializer(serializers.Serializer):
         instance.password = validated_data.get('password', instance.password)
         instance.avatar = validated_data.get('avatar', instance.avatar)
 
+    def get_liked_id(self, instance: User):
+        return instance.liked.id
+
+    def get_cart_id(self, instance: User):
+        return instance.cart.id
+
+    def get_purchases_id(self, instance: User):
+        return instance.purchases.id
 # def update_image_field(image_byte_string, path_to_save):
 #     from PIL import Image
 #     import base64

@@ -11,19 +11,21 @@ import services
 class UserLikedBooksAPI(APIView):
     permission_classes = [AllowAny, ]
 
-    def get(self, request, id, format=None):
-        liked_books = UserLikedBooks.objects.get(user_id__id=id)
+    def get(self, request, pk, format=None):
+        liked_books = UserLikedBooks.objects.get(pk=pk)
         serializer = UserLikedBooksSerializer(liked_books)
         return Response(serializer.data)
 
-    def put(self, request, id, format=None):
-        liked_books = UserLikedBooks.objects.get(user_id__id=id)
+    def put(self, request, pk, format=None):
+        liked_books = UserLikedBooks.objects.get(pk=pk)
         book_slug = request.data.get('bookSlug')
+        in_list = request.data.get('inList')
         serializer = UserLikedBooksSerializer(instance=liked_books,
                                               data={'id': id,
                                                     'user_liked_books': liked_books.user_liked_books},
                                               context={
                                                   'book_slug': book_slug,
+                                                  'in_list': in_list
                                               })
         if serializer.is_valid():
             serializer.save()
@@ -33,10 +35,10 @@ class UserLikedBooksAPI(APIView):
                                                        'user_liked_books'))
             if addedBook is not None:
                 return Response(addedBook, status=status.HTTP_200_OK)
-            response_deleted = {
+            dummy = {
                 "id": 0,
                 "title": "deleted",
-                "slug": "deleted",
+                "slug": book_slug,
                 "authors": [
                     {
                         "id": 0,
@@ -47,7 +49,7 @@ class UserLikedBooksAPI(APIView):
                 "paperbackPrice": 0,
                 "coverImage": "deleted"
             }
-            return Response(response_deleted, status=status.HTTP_200_OK)
+            return Response(dummy, status=status.HTTP_200_OK)
         return Response(serializer.errors,
                         status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
@@ -55,61 +57,81 @@ class UserLikedBooksAPI(APIView):
 class UserCartAPI(APIView):
     permission_classes = [AllowAny, ]
 
-    def get(self, request, id, format=None):
-        cart = UserCart.objects.get(user_id__id=id)
+    def get(self, request, pk, format=None):
+        cart = UserCart.objects.get(pk=pk)
         serializer = UserCartSerializer(cart)
         return Response(serializer.data)
 
-    def put(self, request, id, format=None):
-        cart = UserCart.objects.get(user_id__id=id)
+    def put(self, request, pk, format=None):
+        cart = UserCart.objects.get(pk=pk)
+        book_slug = request.data.get('book_slug')
         data = {
             'id': cart.id,
             'userCart': cart.cart_item.all()
         }
-        if request.data.get('operationType') == 'add':
+
+        if book_slug is not None:
             context = {
-                'operation_type': request.data.get('operationType'),
                 'book_slug': request.data.get('bookSlug'),
                 'cover_type': request.data.get('coverType'),
                 'price': request.data.get('price')
             }
+            serializer = UserCartSerializer(instance=cart, data=data,
+                                            context=context)
+            if serializer.is_valid():
+                serializer.save()
+                response = services.find_dict_in_list(find_by='bookSlug',
+                                                      find_value=book_slug,
+                                                      array=serializer.data)
+                return Response(response, status=status.HTTP_200_OK)
+            return Response(serializer.errors,
+                            status=status.HTTP_500_INTERNAL_SERVER_ERROR)
         else:
+            cart_item_id = request.data.get('cartItemId')
             context = {
-                'operation_type': request.data.get('operationType'),
-                'cart_item_id': request.data.get('cartItemId'),
+                'cart_item_id': cart_item_id,
             }
-        serializer = UserCartSerializer(instance=cart, data=data,
-                                        context=context)
-        response = {'completed': 'adding'} if request.data.get(
-            'operationType') == 'add' else {'completed': 'removal'}
-        if serializer.is_valid():
-            serializer.save()
-            return Response(response, status=status.HTTP_200_OK)
-        return Response(serializer.errors,
-                        status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            serializer = UserCartSerializer(instance=cart, data=data,
+                                            context=context)
+            if serializer.is_valid():
+                serializer.save()
+                dummy = {
+                    "id": cart_item_id,
+                    "quantity": 0,
+                    "title": "deleted",
+                    "coverType": "deleted",
+                    "coverImage": "deleted",
+                    "price": 0,
+                    "authors": [
+                        {
+                            "id": 0,
+                            "name": "deleted"
+                        }
+                    ]
+                }
+                return Response(dummy, status=status.HTTP_204_NO_CONTENT)
+            return Response(serializer.errors,
+                            status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 class CartItemAPI(APIView):
     permission_classes = [AllowAny, ]
 
-    def put(self, request, id, format=None):
-        cart_item = CartItem.objects.get(pk=id)
-        operation_type = request.data.get(
-            'operationType') if request.data.get(
-            'operationType') is not None else 'increase'
+    def put(self, request, pk, format=None):
+        cart_item = CartItem.objects.get(pk=pk)
         data = {
             'id': cart_item.id,
-            'relatedUserEmail': cart_item.user_cart.user_id.email,
             'book': cart_item.book,
             'coverType': cart_item.cover_type,
             'quantity': cart_item.quantity,
+            'price': cart_item.price,
         }
-        context = {'operation_type': operation_type, }
+        context = {'increase': request.data.get('increase'), }
         serializer = CartItemSerializer(cart_item, context=context,
                                         data=data)
         if serializer.is_valid():
             serializer.save()
-            return Response({'updated': True}, status=status.HTTP_200_OK)
+            return Response(serializer.data, status=status.HTTP_200_OK)
         return Response(serializer.errors,
                         status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
@@ -117,13 +139,13 @@ class CartItemAPI(APIView):
 class UserPurchasesAPI(APIView):
     permission_classes = [AllowAny, ]
 
-    def get(self, request, id, format=None):
-        purchases_list = UserPurchasesList.objects.get(user_id__id=id)
+    def get(self, request, pk, format=None):
+        purchases_list = UserPurchasesList.objects.get(user_id__id=pk)
         serializer = UserPurchasesListSerializer(purchases_list)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
-    def put(self, request, id, format=None):
-        purchases_list = UserPurchasesList.objects.get(user_id__id=id)
+    def put(self, request, pk, format=None):
+        purchases_list = UserPurchasesList.objects.get(user_id__id=pk)
         data = {
             'id': purchases_list.id,
             'purchases': purchases_list.purchase_items.all()
@@ -137,3 +159,6 @@ class UserPurchasesAPI(APIView):
             return Response(serializer.data, status=status.HTTP_200_OK)
         return Response(serializer.errors,
                         status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+# from user.models import User
+# u = User.objects.get(pk=2)

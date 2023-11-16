@@ -12,7 +12,7 @@ class UserLikedBooks(models.Model):
     """
 
     user_id = models.OneToOneField(User, on_delete=models.CASCADE,
-                                   related_name='favorite',
+                                   related_name='liked',
                                    null=True, verbose_name='related user')
     user_liked_books = models.ManyToManyField(
         Book, blank=True, verbose_name='liked books list')
@@ -62,7 +62,7 @@ class CartItem(models.Model):
     quantity = models.IntegerField(default=1, validators=[
         MinValueValidator(1), MaxValueValidator(99)],
                                    verbose_name='stored quantity')
-    price = models.IntegerField(default=19.99)
+    price = models.FloatField(default=19.99)
 
     def is_upperclass(self):
         return self.cover_type in {self.PAPERBACK, self.HARDCOVER}

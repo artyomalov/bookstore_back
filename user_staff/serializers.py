@@ -32,14 +32,22 @@ class UserLikedBooksSerializer(serializers.Serializer):
 
     def update(self, instance: UserLikedBooks, validated_data):
         book_slug = self.context.get('book_slug')
+        in_list = self.context.get('in_list')
         liked_exists = instance.user_liked_books.filter(
             slug=book_slug).exists()
         book = Book.objects.get(slug=book_slug)
-        if liked_exists is True:
+        if liked_exists is True and in_list is False:
+            print(liked_exists)
+            print(in_list)
+            print('remove')
             instance.user_liked_books.remove(book)
-        if liked_exists is False:
+            return instance
+        if liked_exists is False and in_list is True:
+            print(liked_exists)
+            print(in_list)
+            print('add')
             instance.user_liked_books.add(book)
-        return instance
+            return instance
 
 
 class UserCartSerializer(serializers.Serializer):
@@ -66,37 +74,35 @@ class UserCartSerializer(serializers.Serializer):
         cart_items_query = instance.cart_item.all()
         user_cart = [{
             'id': cart_item.id,
-            'quantity': cart_item.quantity,
             'title': cart_item.book.title,
             'coverType': cart_item.cover_type,
             'coverImage': cart_item.book.cover_image.url,
-            'price': cart_item.price,
             'authors': [{
                 'id': author.id,
                 'name': author.name,
             } for author in cart_item.book.authors.all()],
+            'price': cart_item.price,
+            'quantity': cart_item.quantity,
         } for cart_item in cart_items_query]
         return user_cart
 
     def update(self, instance: UserCart, validated_data):
-        operation_type = self.context.get('operation_type')
-        cover_type = self.context.get(
-            'operation_type') if self.context.get(
-            'operation_type') is not None else 'hardcover'
-        if operation_type == 'add':
-            book_slug = self.context.get('book_slug')
+        book_slug = self.context.get('book_slug')
+        if book_slug is not None:
+            price = self.context.get('price')
+            cover_type = self.context.get('cover_type')
             book = Book.objects.get(slug=book_slug)
             cart_item = CartItem.objects.create(user_cart=instance,
                                                 book=book,
                                                 cover_type=cover_type,
                                                 quantity=1,
+                                                price=price
                                                 )
             cart_item.save()
             return instance
-        if operation_type == 'remove':
-            cart_item_id = self.context.get('cart_item_id')
-            CartItem.objects.get(pk=cart_item_id).delete()
-            return instance
+        cart_item_id = self.context.get(pk='cart_item_id')
+        CartItem.objects.get(pk=cart_item_id).delete()
+        return instance
 
 
 class CartItemSerializer(serializers.Serializer):
@@ -106,13 +112,13 @@ class CartItemSerializer(serializers.Serializer):
     coverType = serializers.CharField(max_length=9, required=False,
                                       source='cover_type')
     quantity = serializers.IntegerField(allow_null=True, required=False)
-    price = serializers.IntegerField()
+    price = serializers.FloatField()
 
     def get_related_user_email(self, instance: CartItem):
         return instance.user_cart.user_id.email
 
     def update(self, instance: CartItem, validated_data):
-        if self.context.get('operation_type') == 'increase':
+        if self.context.get('increase'):
             book_quantity = instance.book.hardcover_quantity \
                 if instance.cover_type == 'hardcover' \
                 else instance.book.paperback_quantity
@@ -121,8 +127,7 @@ class CartItemSerializer(serializers.Serializer):
             if probably_quantity <= book_quantity:
                 instance.quantity = probably_quantity
                 instance.save()
-
-        if self.context.get('operation_type') == 'decrease':
+        if self.context.get('increase') is False:
             probably_quantity = instance.quantity - 1
             if probably_quantity > 0:
                 instance.quantity = probably_quantity
