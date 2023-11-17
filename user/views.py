@@ -37,11 +37,6 @@ class AuthUserDetail(APIView):
         user = self.get_object(id)
         serializer = AuthorizedUserSerializer(user,
                                               context={'request': request})
-        user_data = {
-            'email': serializer.data.get('email', None),
-            'fullName': serializer.data.get('full_name', None),
-            'avatar': serializer.data.get('avatar', None)
-        }
         path_to_user_avatar = os.path.join(
             os.path.abspath('.'),
             'media',
@@ -50,9 +45,7 @@ class AuthUserDetail(APIView):
         if not os.path.exists(path_to_user_avatar) and not os.path.isfile(
                 path_to_user_avatar):
             domain = request.build_absolute_uri('/')[:-1]
-            user_data[
-                'avatar'] = f'{domain}/media/user/avatars/default_avatar.svg'
-        return Response(user_data)
+        return Response(serializer.data)
 
     def put(self, request, format=None):
         print(request.data['avatar'].file)
@@ -96,13 +89,8 @@ class AuthUserDetail(APIView):
         if serializer.is_valid():
             serializer.save()
             domain = request.build_absolute_uri('/')[:-1]
-            user_data = {
-                'email': serializer.data.get('email'),
-                'full_name': serializer.data.get('full_name'),
-                'avatar': f'{domain}/{serializer.data["avatar"]}'
-            }
 
-            return Response(user_data, status=status.HTTP_200_OK)
+            return Response(serializer.data, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_404_NOT_FOUND)
 
     def delete(self, request, format=None):

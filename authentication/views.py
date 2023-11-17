@@ -80,7 +80,6 @@ class CustomTokenObtainPairView(APIView):
         token_data = self.create_token(user)
         serializer = AuthorizedUserSerializer(user,
                                               context={'request': request})
-        print(serializer.data)
         return Response(
             {'token_data': token_data, 'user_data': serializer.data},
             status=status.HTTP_200_OK)

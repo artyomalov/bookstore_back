@@ -11,8 +11,7 @@ class UserLikedBooksSerializer(serializers.Serializer):
     restricted.
     Also need to pass book_slug:slug and added_to_liked:boolean as context.
     """
-    id = serializers.IntegerField(read_only=True)
-    user_liked_books = serializers.SerializerMethodField(
+    userLiked = serializers.SerializerMethodField(
         method_name='get_liked_books', required=False)
 
     def get_liked_books(self, instance: UserLikedBooks):
@@ -75,6 +74,7 @@ class UserCartSerializer(serializers.Serializer):
         user_cart = [{
             'id': cart_item.id,
             'title': cart_item.book.title,
+            'slug': cart_item.book.slug,
             'coverType': cart_item.cover_type,
             'coverImage': cart_item.book.cover_image.url,
             'authors': [{
