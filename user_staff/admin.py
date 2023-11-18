@@ -37,7 +37,6 @@ class UserCartAdmin(admin.ModelAdmin):
 class CartItemAdmin(admin.ModelAdmin):
     list_display = ('id', 'user_cart', 'book', 'quantity', 'cover_type')
     list_display_links = ('id', 'user_cart')
-    list_editable = ('cover_type',)
     ordering = ('id',)
 
 
@@ -62,5 +61,4 @@ class PurchaseItemAdmin(admin.ModelAdmin):
         'id', 'user_purchases_list', 'book', 'quantity', 'cover_type',
         'bought_time',)
     list_display_links = ('id', 'user_purchases_list',)
-    list_editable = ('cover_type',)
     ordering = ('id',)

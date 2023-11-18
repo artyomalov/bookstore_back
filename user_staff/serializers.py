@@ -11,6 +11,7 @@ class UserLikedBooksSerializer(serializers.Serializer):
     restricted.
     Also need to pass book_slug:slug and added_to_liked:boolean as context.
     """
+    id = serializers.IntegerField(read_only=True)
     userLiked = serializers.SerializerMethodField(
         method_name='get_liked_books', required=False)
 
@@ -36,15 +37,9 @@ class UserLikedBooksSerializer(serializers.Serializer):
             slug=book_slug).exists()
         book = Book.objects.get(slug=book_slug)
         if liked_exists is True and in_list is False:
-            print(liked_exists)
-            print(in_list)
-            print('remove')
             instance.user_liked_books.remove(book)
             return instance
         if liked_exists is False and in_list is True:
-            print(liked_exists)
-            print(in_list)
-            print('add')
             instance.user_liked_books.add(book)
             return instance
 
@@ -100,7 +95,7 @@ class UserCartSerializer(serializers.Serializer):
                                                 )
             cart_item.save()
             return instance
-        cart_item_id = self.context.get(pk='cart_item_id')
+        cart_item_id = self.context.get('cart_item_id')
         CartItem.objects.get(pk=cart_item_id).delete()
         return instance
 

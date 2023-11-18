@@ -64,7 +64,7 @@ class UserCartAPI(APIView):
 
     def put(self, request, pk, format=None):
         cart = UserCart.objects.get(pk=pk)
-        book_slug = request.data.get('book_slug')
+        book_slug = request.data.get('bookSlug')
         data = {
             'id': cart.id,
             'userCart': cart.cart_item.all()
@@ -82,7 +82,8 @@ class UserCartAPI(APIView):
                 serializer.save()
                 response = services.find_dict_in_list(find_by='bookSlug',
                                                       find_value=book_slug,
-                                                      array=serializer.data)
+                                                      array=serializer.data.get(
+                                                          'userCart'))
                 return Response(response, status=status.HTTP_200_OK)
             return Response(serializer.errors,
                             status=status.HTTP_500_INTERNAL_SERVER_ERROR)

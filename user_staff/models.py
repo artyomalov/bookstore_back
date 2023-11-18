@@ -44,20 +44,19 @@ class CartItem(models.Model):
     Model of cart item. Contains quantity of books, that user is going to buy
     and related book's model.
     """
-    PAPERBACK = 'paperback'
-    HARDCOVER = 'hardcover'
-    COVER_CHOICES = (
-        ('PAPERBACK', 'paperback'),
-        ('HARDCOVER', 'hardcover')
-    )
+    # PAPERBACK = 'paperback'
+    # HARDCOVER = 'hardcover'
+    # COVER_CHOICES = [
+    #     ('PAPERBACK', 'paperback'),
+    #     ('HARDCOVER', 'hardcover')
+    # ]
     user_cart = models.ForeignKey(
         UserCart, on_delete=models.CASCADE, related_name='cart_item',
         verbose_name='user\'s cart')
     book = models.ForeignKey(
         Book, on_delete=models.CASCADE, null=False, related_name='book_cart',
         verbose_name='stored book')
-    cover_type = models.CharField(max_length=9, choices=COVER_CHOICES,
-                                  default=HARDCOVER)
+    cover_type = models.CharField(max_length=9, default='hardcover')
 
     quantity = models.IntegerField(default=1, validators=[
         MinValueValidator(1), MaxValueValidator(99)],
