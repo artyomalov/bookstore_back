@@ -2,6 +2,7 @@ from rest_framework import serializers
 from .models import UserLikedBooks, UserCart, CartItem, UserPurchasesList, \
     PurchaseItem
 from book.models import Book
+from django.db.models import Sum
 
 
 class UserLikedBooksSerializer(serializers.Serializer):
@@ -62,7 +63,8 @@ class UserCartSerializer(serializers.Serializer):
         - cart_item_id:number (id of cart item that will be deleted).
     """
     id = serializers.IntegerField(read_only=True)
-    userCart = serializers.SerializerMethodField(method_name='get_cart')
+    cartItemsList = serializers.SerializerMethodField(method_name='get_cart')
+    total = serializers.SerializerMethodField(method_name='get_total')
 
     def get_cart(self, instance: UserCart):
         cart_items_query = instance.cart_item.all()
@@ -80,6 +82,10 @@ class UserCartSerializer(serializers.Serializer):
             'quantity': cart_item.quantity,
         } for cart_item in cart_items_query]
         return user_cart
+
+    def get_total(self, instance: UserCart):
+        total_dict = instance.cart_item.aggregate(total=Sum('price'))
+        return total_dict.get('total')
 
     def update(self, instance: UserCart, validated_data):
         book_slug = self.context.get('book_slug')

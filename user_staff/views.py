@@ -71,6 +71,7 @@ class UserCartAPI(APIView):
         }
 
         if book_slug is not None:
+            cover_type = request.data.get('coverType')
             context = {
                 'book_slug': request.data.get('bookSlug'),
                 'cover_type': request.data.get('coverType'),
@@ -80,14 +81,17 @@ class UserCartAPI(APIView):
                                             context=context)
             if serializer.is_valid():
                 serializer.save()
-                response = services.find_dict_in_list(find_by='bookSlug',
-                                                      find_value=book_slug,
-                                                      array=serializer.data.get(
-                                                          'userCart'))
+                response = services.find_dict_in_list(
+                    find_by=['slug', 'coverType'],
+                    find_value=[book_slug, cover_type],
+                    array=serializer.data.get(
+                        'cartItemsList'))
+
                 return Response(response, status=status.HTTP_200_OK)
             return Response(serializer.errors,
                             status=status.HTTP_500_INTERNAL_SERVER_ERROR)
         else:
+
             cart_item_id = request.data.get('cartItemId')
             context = {
                 'cart_item_id': cart_item_id,
@@ -110,7 +114,7 @@ class UserCartAPI(APIView):
                         }
                     ]
                 }
-                return Response(dummy, status=status.HTTP_204_NO_CONTENT)
+                return Response(dummy, status=status.HTTP_200_OK)
             return Response(serializer.errors,
                             status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
@@ -132,6 +136,7 @@ class CartItemAPI(APIView):
                                         data=data)
         if serializer.is_valid():
             serializer.save()
+
             return Response(serializer.data, status=status.HTTP_200_OK)
         return Response(serializer.errors,
                         status=status.HTTP_500_INTERNAL_SERVER_ERROR)
