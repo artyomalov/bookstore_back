@@ -1,8 +1,8 @@
+from services import get_total
 from rest_framework import serializers
 from .models import UserLikedBooks, UserCart, CartItem, UserPurchasesList, \
     PurchaseItem
 from book.models import Book
-from django.db.models import Sum
 
 
 class UserLikedBooksSerializer(serializers.Serializer):
@@ -64,7 +64,8 @@ class UserCartSerializer(serializers.Serializer):
     """
     id = serializers.IntegerField(read_only=True)
     cartItemsList = serializers.SerializerMethodField(method_name='get_cart')
-    total = serializers.SerializerMethodField(method_name='get_total')
+    total = serializers.SerializerMethodField(method_name='get_total',
+                                              read_only=True)
 
     def get_cart(self, instance: UserCart):
         cart_items_query = instance.cart_item.all()
@@ -84,8 +85,7 @@ class UserCartSerializer(serializers.Serializer):
         return user_cart
 
     def get_total(self, instance: UserCart):
-        total_dict = instance.cart_item.aggregate(total=Sum('price'))
-        return total_dict.get('total')
+        return get_total()
 
     def update(self, instance: UserCart, validated_data):
         book_slug = self.context.get('book_slug')
@@ -109,14 +109,19 @@ class UserCartSerializer(serializers.Serializer):
 class CartItemSerializer(serializers.Serializer):
     id = serializers.IntegerField(read_only=True)
     book = serializers.SerializerMethodField(method_name='get_book',
-                                             required=False)
+                                             required=False, read_only=True)
     coverType = serializers.CharField(max_length=9, required=False,
                                       source='cover_type')
     quantity = serializers.IntegerField(allow_null=True, required=False)
     price = serializers.FloatField()
+    total = serializers.SerializerMethodField(read_only=True,
+                                              method_name='get_total')
 
     def get_related_user_email(self, instance: CartItem):
         return instance.user_cart.user_id.email
+
+    def get_total(self, instance: CartItem):
+        return get_total()
 
     def update(self, instance: CartItem, validated_data):
         if self.context.get('increase'):

@@ -81,11 +81,16 @@ class UserCartAPI(APIView):
                                             context=context)
             if serializer.is_valid():
                 serializer.save()
-                response = services.find_dict_in_list(
+                cart_item = services.find_dict_in_list(
                     find_by=['slug', 'coverType'],
                     find_value=[book_slug, cover_type],
                     array=serializer.data.get(
                         'cartItemsList'))
+
+                response = {
+                    'cartItem': cart_item,
+                    'total': serializer.data.get('total')
+                }
 
                 return Response(response, status=status.HTTP_200_OK)
             return Response(serializer.errors,
@@ -114,7 +119,13 @@ class UserCartAPI(APIView):
                         }
                     ]
                 }
-                return Response(dummy, status=status.HTTP_200_OK)
+                data = serializer.data
+                total = data.get('total')
+                response = {
+                    'cartItem': dummy,
+                    'total': total
+                }
+                return Response(response, status=status.HTTP_200_OK)
             return Response(serializer.errors,
                             status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
@@ -136,8 +147,13 @@ class CartItemAPI(APIView):
                                         data=data)
         if serializer.is_valid():
             serializer.save()
-
-            return Response(serializer.data, status=status.HTTP_200_OK)
+            data = serializer.data
+            total = data.get('total')
+            response = {
+                'cartItem': data,
+                'total': total
+            }
+            return Response(response, status=status.HTTP_200_OK)
         return Response(serializer.errors,
                         status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
@@ -148,6 +164,7 @@ class UserPurchasesAPI(APIView):
     def get(self, request, pk, format=None):
         purchases_list = UserPurchasesList.objects.get(user_id__id=pk)
         serializer = UserPurchasesListSerializer(purchases_list)
+
         return Response(serializer.data, status=status.HTTP_200_OK)
 
     def put(self, request, pk, format=None):
