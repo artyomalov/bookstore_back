@@ -21,20 +21,24 @@ class UserLikedBooksAPI(APIView):
         book_slug = request.data.get('bookSlug')
         in_list = request.data.get('inList')
         serializer = UserLikedBooksSerializer(instance=liked_books,
-                                              data={'id': id,
-                                                    'user_liked_books': liked_books.user_liked_books},
+                                              data={'id': id},
                                               context={
                                                   'book_slug': book_slug,
                                                   'in_list': in_list
                                               })
         if serializer.is_valid():
             serializer.save()
-            addedBook = services.find_dict_in_list(find_by='slug',
-                                                   find_value=book_slug,
-                                                   array=serializer.data.get(
-                                                       'user_liked_books'))
-            if addedBook is not None:
-                return Response(addedBook, status=status.HTTP_200_OK)
+
+            def compare_slug(element):
+                print('execute>>>>>>>>>')
+                if element['slug'] == book_slug:
+                    return True
+                return False
+
+            added_book = services.find_dict_in_list(array=serializer.data.get(
+                'likedList'), compare_function=compare_slug)
+            if added_book is not None:
+                return Response(added_book, status=status.HTTP_200_OK)
             dummy = {
                 "id": 0,
                 "title": "deleted",
@@ -46,7 +50,6 @@ class UserLikedBooksAPI(APIView):
                     },
                 ],
                 "hardcoverPrice": 0,
-                "paperbackPrice": 0,
                 "coverImage": "deleted"
             }
             return Response(dummy, status=status.HTTP_200_OK)
@@ -81,11 +84,16 @@ class UserCartAPI(APIView):
                                             context=context)
             if serializer.is_valid():
                 serializer.save()
+
+                def compare_slug_and_cover_type(element):
+                    if (element['slug'] == book_slug and
+                            element['coverType'] == cover_type):
+                        return True
+                    return False
+
                 cart_item = services.find_dict_in_list(
-                    find_by=['slug', 'coverType'],
-                    find_value=[book_slug, cover_type],
-                    array=serializer.data.get(
-                        'cartItemsList'))
+                    array=serializer.data.get('cartItemsList'),
+                    compare_function=compare_slug_and_cover_type)
 
                 response = {
                     'cartItem': cart_item,

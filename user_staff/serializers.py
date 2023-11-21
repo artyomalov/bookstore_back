@@ -13,8 +13,8 @@ class UserLikedBooksSerializer(serializers.Serializer):
     Also need to pass book_slug:slug and added_to_liked:boolean as context.
     """
     id = serializers.IntegerField(read_only=True)
-    userLiked = serializers.SerializerMethodField(
-        method_name='get_liked_books', required=False)
+    likedList = serializers.SerializerMethodField(
+        method_name='get_liked_books', read_only=True)
 
     def get_liked_books(self, instance: UserLikedBooks):
         get_liked_books_query = instance.user_liked_books.all()
@@ -27,7 +27,6 @@ class UserLikedBooksSerializer(serializers.Serializer):
                 'name': author.name,
             } for author in book.authors.all()],
             'hardcoverPrice': book.hardcover_price,
-            'paperbackPrice': book.paperback_price,
             'coverImage': book.cover_image.url
         } for book in get_liked_books_query]
 
