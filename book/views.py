@@ -18,8 +18,23 @@ class BookList(APIView):
         return Response(serializer.data)
 
 
+class FoundBookList(APIView):
+    """
+    Look for requested book data using title for filter. Returns list of Book
+    model instances.
+    """
+
+    permission_classes = [AllowAny]
+
+    def get(self, request, slug, format=None):
+        books = Book.objects.filter(slug__icontains=slug)
+        serializer = BookSerializer(books, many=True)
+        return Response(serializer.data)
+
+
 class BookDetail(APIView):
     permission_classes = [AllowAny, ]
+
     def get_book(self, slug):
         try:
             return Book.objects.get(slug=slug)
