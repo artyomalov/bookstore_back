@@ -1,10 +1,10 @@
 __all__ = ['Book', 'Author', 'Rating', 'Comment', 'Genre', ]
 
 import os.path
-
 from django.db import models
 from django.contrib.auth import get_user_model
 from django.core.validators import MinValueValidator, MaxValueValidator
+from django.utils.text import slugify
 
 User = get_user_model()
 
@@ -24,7 +24,8 @@ class Book(models.Model):
     title = models.CharField(max_length=255, blank=False, null=True,
                              verbose_name='title')
     slug = models.SlugField(max_length=255, unique=True, db_index=True,
-                            verbose_name='slug')
+                            verbose_name='slug',
+                            blank=True)
     annotation = models.TextField(max_length=4000, blank=False,
                                   verbose_name='annotation')
     paperback_quantity = models.IntegerField(default=0, blank=False,
@@ -56,6 +57,7 @@ class Book(models.Model):
         return self.title
 
     def save(self, *args, **kwargs):
+        self.slug = slugify(self.title)
         img_name, img_ext = os.path.splitext(self.cover_image.name)
         new_img_name = f'{self.title}{img_ext}'
         self.cover_image.name = new_img_name
