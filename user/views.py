@@ -35,20 +35,18 @@ class AuthUserDetail(APIView):
 
         id = self.get_id(request)
         user = self.get_object(id)
-        serializer = AuthorizedUserSerializer(user,
-                                              context={'request': request})
-        path_to_user_avatar = os.path.join(
-            os.path.abspath('.'),
-            'media',
-            str(user.avatar).replace('/', '\\')
-        )
-        if not os.path.exists(path_to_user_avatar) and not os.path.isfile(
-                path_to_user_avatar):
-            domain = request.build_absolute_uri('/')[:-1]
+        serializer = AuthorizedUserSerializer(user)
+            # path_to_user_avatar = os.path.join(
+            #     os.path.abspath('.'),
+            #     'media',
+            #     str(user.avatar).replace('/', '\\')
+            # )
+        # if not os.path.exists(path_to_user_avatar) and not os.path.isfile(
+        #         path_to_user_avatar):
+        #     domain = request.build_absolute_uri('/')[:-1]
         return Response(serializer.data)
 
     def put(self, request, format=None):
-        print(request.data['avatar'].file)
         id = self.get_id(request)
         user = self.get_object(id)
         old_password = request.data.get('old_password')

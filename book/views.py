@@ -1,8 +1,9 @@
 from rest_framework.response import Response
+from rest_framework import status
 from rest_framework.views import APIView
 from rest_framework.permissions import AllowAny
-from .models import Book, Genre
-from .serializers import BookSerializer, GenreSerializer
+from .models import Book, Genre, Comment
+from .serializers import BookSerializer, CommentSerializer, GenreSerializer
 from django.http import Http404
 
 
@@ -32,19 +33,46 @@ class FoundBookList(APIView):
         return Response(serializer.data)
 
 
-class BookDetail(APIView):
-    permission_classes = [AllowAny, ]
+class CreateComment(APIView):
+    permission_classes = [AllowAny]
 
-    def get_book(self, slug):
-        try:
-            return Book.objects.get(slug=slug)
-        except Book.DoesNotExist:
-            raise Http404
+    def post(self, request, format=None):
+        validated_data = {'text': request.data.get('commentText')}
+        context = {
+            'user_id': request.data.get('userId'),
+            'book_id': request.data.get('bookId')
+        }
+        print(request.data)
+        serializer = CommentSerializer(data=validated_data, context=context)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class GetComments(APIView):
+    permission_classes = [AllowAny]
 
     def get(self, request, slug, format=None):
-        book = Book.objects.get(slug=slug)
-        serializer = BookSerializer(book)
-        return Response(serializer.data)
+        comments_list = Comment.objects.filter(book__slug=slug)
+        serializer = CommentSerializer(comments_list, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+    # class BookDetail(APIView):
+
+
+#     permission_classes = [AllowAny, ]
+#
+#     def get_book(self, slug):
+#         try:
+#             return Book.objects.get(slug=slug)
+#         except Book.DoesNotExist:
+#             raise Http404
+#
+#     def get(self, request, slug, format=None):
+#         book = Book.objects.get(slug=slug)
+#         serializer = BookSerializer(book)
+#         return Response(serializer.data)
 
 
 class GenresList(APIView):

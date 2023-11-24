@@ -42,12 +42,14 @@ class Book(models.Model):
     hardcover_price = models.FloatField(blank=False,
                                         validators=[MinValueValidator(1)],
                                         verbose_name='hardcover price')
+    cover_image_preview = models.ImageField(upload_to='books/covers/',
+                                            verbose_name='cover preview')
     cover_image = models.ImageField(
         upload_to='books/covers/', blank=False,
-        null=False, verbose_name='cover')
+        null=False, verbose_name='cover full size')
     authors = models.ManyToManyField('Author', verbose_name='authors list')
     genres = models.ManyToManyField('Genre', verbose_name='genres list')
-    created_at = models.DateTimeField(verbose_name='added to sell list')
+    created_at = models.DateTimeField(verbose_name='added to sell list time')
 
     class Meta:
         verbose_name = 'book'
@@ -57,10 +59,13 @@ class Book(models.Model):
         return self.title
 
     def save(self, *args, **kwargs):
-        self.slug = slugify(self.title)
         img_name, img_ext = os.path.splitext(self.cover_image.name)
+        preview_name, preview_ext = os.path.splitext(self.cover_image.name)
         new_img_name = f'{self.title}{img_ext}'
+        new_preview_name = f'{self.title}_preview{preview_ext}'
         self.cover_image.name = new_img_name
+        self.cover_image_preview.name = new_preview_name
+        self.slug = slugify(self.title)
         super().save(*args, **kwargs)
 
 
@@ -110,8 +115,8 @@ class Comment(models.Model):
     Singe comment item. Contains creation time, comment text,
     link to the created comment user and related book.
     """
-    comment_text = models.CharField(max_length=4000, verbose_name='comment')
-    created_at = models.DateTimeField(verbose_name='created at')
+    comment_text = models.TextField(max_length=4000, verbose_name='comment')
+    created_at = models.DateTimeField(verbose_name='created at', auto_now_add=True)
     user = models.ForeignKey(User, on_delete=models.CASCADE,
                              verbose_name='left comment user')
     book = models.ForeignKey(Book, on_delete=models.CASCADE,

@@ -71,7 +71,7 @@ class User(AbstractBaseUser):
         verbose_name='password'
     )
     avatar = models.ImageField(
-        default='media/user/avatars/default_avatar.svg',
+        # default='/user/avatars/default_avatar.svg',
         upload_to='user/avatars/',
         blank=True,
         null=True,
@@ -103,7 +103,10 @@ class User(AbstractBaseUser):
         return True
 
     def save(self, *args, **kwargs):
-        if (self.avatar.name is not None):
+        if (
+                self.avatar.name is not None and
+                self.avatar.name != '/user/avatars/default_avatar.svg'
+        ):
             img_name, img_ext = os.path.splitext(self.avatar.name)
             user_email = self.email
             undotted_email = str(user_email).replace('.', '')
@@ -112,3 +115,9 @@ class User(AbstractBaseUser):
             super().save(*args, **kwargs)
             return
         super().save(*args, **kwargs)
+
+    @property
+    def get_avatar_url(self):
+        if self.avatar and hasattr(self.avatar, 'url'):
+            return self.avatar.url
+        else: return 'media/user/avatars/default_avatar.svg'
