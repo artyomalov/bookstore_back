@@ -19,6 +19,26 @@ class BookList(APIView):
         return Response(serializer.data)
 
 
+class GetSimularBooksByGenre(APIView):
+    """
+    Get simular books by genre
+    """
+    permission_classes = [AllowAny]
+
+    def get(self, request, slug, format=None):
+        genres_query = Book.objects.values('genres').filter(
+            slug=slug)
+        genres_ids = []
+
+        for genre_dict in genres_query:
+            genres_ids.append(genre_dict['genres'])
+
+        books = Book.objects.filter(genres__id__in=[*genres_ids]).exclude(
+            slug=slug)
+        serializer = BookSerializer(books, many=True)
+        return Response(serializer.data)
+
+
 class FoundBookList(APIView):
     """
     Look for requested book data using title for filter. Returns list of Book
