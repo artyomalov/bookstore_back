@@ -1,6 +1,6 @@
 from django.urls import path
 from .views import GenresList, BookList, FoundBookList, GetComments, \
-    CreateComment, GetSimularBooksByGenre
+    CreateComment, GetSimularBooksByGenre, GetAverageRating, CreateRating
 
 app_name = 'book_api'
 
@@ -10,7 +10,8 @@ urlpatterns = [
     path('search/<slug:slug>', FoundBookList.as_view()),
     path('comments/create', CreateComment.as_view()),
     path('comments_list/<slug:slug>', GetComments.as_view()),
-    # path('detail/<slug:slug>/', BookDetail.as_view()),
+    path('rating/get_average/<int:book_id>', GetAverageRating.as_view()),
+    path('rating/rate/', CreateRating.as_view()),
     path('genres/', GenresList.as_view(),
          )
 

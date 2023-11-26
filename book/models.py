@@ -133,7 +133,7 @@ class Comment(models.Model):
 
 class Genre(models.Model):
     """
-        Describes model of books' genres. It is also filters at client side.
+    Describes model of books' genres. It is also filters at client side.
     """
     genre_name = models.CharField(max_length=255, blank=False,
                                   verbose_name='genre')

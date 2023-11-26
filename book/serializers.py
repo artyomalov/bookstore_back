@@ -3,8 +3,7 @@ __all__ = ['BookSerializer']
 from rest_framework import serializers
 from django.contrib.auth import get_user_model
 from django.db.models import Avg, Sum, F
-
-from book.models import Comment
+from book.models import Comment, Rating
 
 User = get_user_model()
 
@@ -61,20 +60,6 @@ class BookSerializer(serializers.Serializer):
         ]
         return authors_list
 
-    # def get_comments(self, instance):
-    #     """
-    #     Get list of book's comments.
-    #     """
-    #     comments_list = instance.comment_set.all().values(
-    #         'id',
-    #         userName=F('user__full_name'),
-    #         userAvatar=F('user__avatar'),
-    #         createdAt=F('created_at'),
-    #         text=F('comment_text')
-    #     )
-    #
-    #     return comments_list
-
 
 class CommentSerializer(serializers.Serializer):
     id = serializers.IntegerField(read_only=True)
@@ -109,6 +94,33 @@ class GenreSerializer(serializers.Serializer):
                                       source='genre_name')
     slug = serializers.SlugField(max_length=255)
 
+
+class RatingSerializer(serializers.Serializer):
+    id = serializers.IntegerField(read_only=True)
+    averageRate = serializers.SerializerMethodField(read_only=True,
+                                                     method_name='get_rating')
+    rate = serializers.IntegerField()
+
+    def get_rating(self, instance:Rating):
+        """
+        Get common average rating of the book.
+        """
+        rate_dict = Rating.objects.filter(book_id=instance.book.id).aggregate(Avg('rate'))
+        if rate_dict.get('rate__avg') is None:
+            return 0
+        return rate_dict.get('rate__avg')
+
+    def create(self, validated_data):
+        rating = Rating(rate=validated_data.get('rate'))
+        rating.user_id = self.context.get('user_id')
+        rating.book_id = self.context.get('book_id')
+        rating.save()
+        return rating
+
+    def update(self, instance, validated_data):
+        instance.rate = validated_data.get('rate')
+        instance.save()
+        return instance
 # Fiction
 # fiction
 
