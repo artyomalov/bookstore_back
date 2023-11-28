@@ -2,22 +2,59 @@ from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.views import APIView
 from rest_framework.permissions import AllowAny
-from django.db.models import Avg
+from django.db.models import Avg, Value
 from .models import Book, Genre, Comment, Rating
 from .serializers import BookSerializer, CommentSerializer, GenreSerializer, \
     RatingSerializer
+from django.core.paginator import Paginator
 
 
 class BookList(APIView):
     """
-    List all Books.
+    List Books depends on selected genres, selected price and
+    selected sort type.
+    Default values are all genres, price from 0 to 1000 and sort by id.
     """
     permission_classes = [AllowAny, ]
 
     def get(self, request, format=None):
-        books = Book.objects.all()
-        serializer = BookSerializer(books, many=True)
-        return Response(serializer.data)
+        print(request.query_params.get('page'))
+        genres_ids_filter = [
+            *request.query_params.getlist('genre_id')]
+        if len(genres_ids_filter) == 0:
+            genres_ids_filter = []
+            genres_dicts_list = Genre.objects.values('id')
+            for genre_dict in genres_dicts_list:
+                genres_ids_filter.append(genre_dict.get('id'))
+        sort_type = request.query_params.get(
+            'sort_type') if request.query_params.get(
+            'sort_type') is not None else 'id'
+        min_price = request.query_params.get(
+            'min_price') if request.query_params.get(
+            'min_price') is not None else 0
+        max_price = request.query_params.get(
+            'max_price') if request.query_params.get(
+            'max_price') is not None else 100
+        page = request.query_params.get('page') if request.query_params.get(
+            'page') is not None else 1
+        books_queryset = Book.objects.filter(
+            genres__id__in=[*genres_ids_filter],
+            hardcover_price__range=(min_price, max_price))
+        if sort_type == 'rating':
+            books_queryset = books_queryset.annotate(
+                rating_avg=Avg('rating__rate', default=0)).order_by(
+                '-rating_avg').distinct()
+        else:
+            books_queryset = books_queryset.order_by(
+                sort_type).distinct()
+        paginator = Paginator(books_queryset, per_page=4)
+        serializer = BookSerializer(paginator.page(page), many=True)
+        return Response({
+            'books': serializer.data,
+            'pagesCount': paginator.num_pages,
+            'hasNext': paginator.page(page).has_next(),
+            'hasPrevious': paginator.page(page).has_previous()
+        })
 
 
 class GetSimularBooksByGenre(APIView):

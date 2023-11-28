@@ -21,6 +21,7 @@ class BookAdmin(admin.ModelAdmin):
     list_display_links = ('title', 'slug',)
     list_editable = ('paperback_price', 'hardcover_price',)
     list_per_page = 10
+    filter_horizontal = ('genres',)
 
 
 @admin.register(Author)
