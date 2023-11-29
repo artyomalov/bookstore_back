@@ -170,17 +170,14 @@ class UserPurchasesAPI(APIView):
     permission_classes = [AllowAny, ]
 
     def get(self, request, pk, format=None):
-        purchases_list = UserPurchasesList.objects.get(user_id__id=pk)
+        purchases_list = UserPurchasesList.objects.get(pk=pk)
         serializer = UserPurchasesListSerializer(purchases_list)
 
         return Response(serializer.data, status=status.HTTP_200_OK)
 
     def put(self, request, pk, format=None):
-        purchases_list = UserPurchasesList.objects.get(user_id__id=pk)
-        data = {
-            'id': purchases_list.id,
-            'purchases': purchases_list.purchase_items.all()
-        }
+        purchases_list = UserPurchasesList.objects.get(pk=pk)
+        data = {}
         context = {'cart_items_ids': request.data.get('cartItemIds')}
         serializer = UserPurchasesListSerializer(instance=purchases_list,
                                                  data=data,

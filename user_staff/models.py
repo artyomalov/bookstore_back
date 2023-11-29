@@ -97,12 +97,6 @@ class PurchaseItem(models.Model):
     Contains quantity of books, that user has bought already, bought time
     and related book's model
     """
-    PAPERBACK = 'paperback'
-    HARDCOVER = 'hardcover'
-    COVER_CHOICES = (
-        ('PAPERBACK', 'paperback'),
-        ('HARDCOVER', 'hardcover')
-    )
     user_purchases_list = models.ForeignKey(
         UserPurchasesList, on_delete=models.CASCADE,
         related_name='purchase_items',
@@ -114,8 +108,7 @@ class PurchaseItem(models.Model):
     quantity = models.IntegerField(
         validators=[MinValueValidator(1), MaxValueValidator(99)],
         verbose_name='bought quantity')
-    cover_type = models.CharField(max_length=9, choices=COVER_CHOICES,
-                                  default=HARDCOVER)
+    cover_type = models.CharField(max_length=9, default='hardcover')
     price = models.IntegerField(default=19.99)
     bought_time = models.DateTimeField(auto_now_add=True,
                                        verbose_name='bought time')
@@ -124,7 +117,7 @@ class PurchaseItem(models.Model):
         return self.cover_type in {self.PAPERBACK, self.HARDCOVER}
 
     def __str__(self):
-        return f'Purchase item for {self.user_cart.user_id.email}'
+        return f'Purchase item for {self.user_purchases_list.user_id.email}'
 
     class Meta:
         verbose_name = 'purchase item'

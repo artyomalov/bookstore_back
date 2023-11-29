@@ -148,7 +148,8 @@ class CartItemSerializer(serializers.Serializer):
 
 class UserPurchasesListSerializer(serializers.Serializer):
     id = serializers.IntegerField(read_only=True)
-    purchases = serializers.SerializerMethodField(method_name='get_purchases')
+    purchases = serializers.SerializerMethodField(method_name='get_purchases',
+                                                  read_only=True)
 
     def get_purchases(self, instance: UserPurchasesList):
         user_purchases_query = instance.purchase_items.all()
@@ -157,10 +158,12 @@ class UserPurchasesListSerializer(serializers.Serializer):
             'id': purchase_item.id,
             'quantity': purchase_item.quantity,
             'title': purchase_item.book.title,
+            'slug': purchase_item.book.slug,
             'coverImage': purchase_item.book.cover_image.url,
             'coverType': purchase_item.cover_type,
             'price': purchase_item.price,
             'authors': [{
+                'id': author.id,
                 'name': author.name,
             } for author in purchase_item.book.authors.all()],
             'boughtTime': purchase_item.bought_time,

@@ -74,10 +74,15 @@ class GetSimularBooksByGenre(APIView):
         books = Book.objects.filter(genres__id__in=[*genres_ids]).exclude(
             slug=slug)
         serializer = BookSerializer(books, many=True)
-        return Response(serializer.data)
+        return Response({
+            'books': serializer.data,
+            'pagesCount': 1,
+            'hasNext': False,
+            'hasPrevious': False,
+        })
 
 
-class FoundBookList(APIView):
+class FoundBooksList(APIView):
     """
     Look for requested book data using title for filter. Returns list of Book
     model instances.
@@ -86,9 +91,17 @@ class FoundBookList(APIView):
     permission_classes = [AllowAny]
 
     def get(self, request, slug, format=None):
-        books = Book.objects.filter(slug__icontains=slug)
-        serializer = BookSerializer(books, many=True)
-        return Response(serializer.data)
+        page = request.query_params.get('page') if request.query_params.get(
+            'page') is not None else 1
+        books_queryset = Book.objects.filter(slug__icontains=slug)
+        paginator = Paginator(books_queryset, per_page=4)
+        serializer = BookSerializer(paginator.page(page), many=True)
+        return Response({
+            'books': serializer.data,
+            'pagesCount': paginator.num_pages,
+            'hasNext': paginator.page(page).has_next(),
+            'hasPrevious': paginator.page(page).has_previous()
+        })
 
 
 class CreateComment(APIView):
@@ -137,7 +150,7 @@ class GetAverageRating(APIView):
         rate_dict = Book.objects.get(pk=book_id).rating_set.all().aggregate(
             Avg('rate'))
         if rate_dict.get('rate__avg') is None:
-            return 0
+            rate_dict = {'rate__avg': 0}
         return Response({'averageRating': rate_dict.get('rate__avg')},
                         status=status.HTTP_200_OK)
 
