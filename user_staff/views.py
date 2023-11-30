@@ -1,11 +1,14 @@
+import json
+import requests
+import services
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
+from django.conf import settings
 from .models import UserLikedBooks, UserCart, UserPurchasesList, CartItem
 from .serializers import UserLikedBooksSerializer, UserCartSerializer, \
     CartItemSerializer, UserPurchasesListSerializer
 from rest_framework.permissions import AllowAny
-import services
 
 
 class UserLikedBooksAPI(APIView):
@@ -177,16 +180,42 @@ class UserPurchasesAPI(APIView):
 
     def put(self, request, pk, format=None):
         purchases_list = UserPurchasesList.objects.get(pk=pk)
-        data = {}
-        context = {'cart_items_ids': request.data.get('cartItemIds')}
-        serializer = UserPurchasesListSerializer(instance=purchases_list,
-                                                 data=data,
-                                                 context=context)
+        cart_items_query = CartItem.objects.filter(
+            pk__in=[*request.data.get('cartItemIds')])
+
+        cart_data_for_purchases = []
+        for cart_item in cart_items_query:
+            book = cart_item.book
+            quantity = cart_item.quantity
+            cover_type = cart_item.cover_type
+            purchase_data = f'&text=New book.\nBook title: {book.title}.\nQuantity: {quantity}.\nCover type: {cover_type}.\nUser email: {cart_item.user_cart.user_id.email}'
+            try:
+                response = requests.get(
+                    settings.TELEGRAM_API + purchase_data).content
+                response_data = json.loads(response)
+                if response_data.get('ok') is not True:
+                    raise Exception("Can't send data to TG")
+                cart_data_for_purchases.append(
+                    {
+                        'book': book,
+                        'quantity': quantity,
+                        'cover_type': cover_type
+                    }
+                )
+            except Exception as error:
+                return Response(error,
+                                status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        serializer = UserPurchasesListSerializer(
+            instance=purchases_list,
+            data={},
+            context={'cart_data_for_purchases': cart_data_for_purchases}
+        )
         if serializer.is_valid():
             serializer.save()
-            return Response(serializer.data, status=status.HTTP_200_OK)
+            return Response(serializer.data,
+                            status=status.HTTP_200_OK)
         return Response(serializer.errors,
-                        status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+                        status=status.HTTP_200_OK)
 
 # from user.models import User
 # u = User.objects.get(pk=2)

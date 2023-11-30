@@ -172,14 +172,13 @@ class UserPurchasesListSerializer(serializers.Serializer):
         return purchase_items
 
     def update(self, instance: UserPurchasesList, validated_data):
-        cart_items_ids = self.context.get('cart_items_ids')
-        cart_items_query = CartItem.objects.filter(pk__in=[*cart_items_ids])
-        for cart_item in cart_items_query:
+        print(self.context.get('cart_data_for_purchases'))
+        for cart_item in self.context.get('cart_data_for_purchases'):
             purchase_item = PurchaseItem.objects.create(
-                user_purchases_list=instance, book=cart_item.book,
-                quantity=cart_item.quantity,
-                cover_type=cart_item.cover_type
+                user_purchases_list=instance,
+                book=cart_item.get('book'),
+                quantity=cart_item.get('quantity'),
+                cover_type=cart_item.get('cover_type')
             )
             instance.purchase_items.add(purchase_item)
-        cart_items_query.delete()
         return instance

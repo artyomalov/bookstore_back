@@ -1,7 +1,8 @@
 import os
 import datetime
 from pathlib import Path
-from .config import DB_HOST, DB_NAME, DB_PASS, DB_PORT, DB_USER
+from .config import DB_HOST, DB_NAME, DB_PASS, DB_PORT, DB_USER, BOT_TOKEN, \
+    CHAT_ID
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -174,3 +175,5 @@ CORS_ALLOWED_ORIGINS = [
 #         'rest_framework.permissions.IsAuthenticated',
 #     ]
 # }
+
+TELEGRAM_API = url = f'https://api.telegram.org/bot{BOT_TOKEN}/sendMessage?chat_id={CHAT_ID}&chat_type=private'
