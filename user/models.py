@@ -49,11 +49,16 @@ class UserManager(BaseUserManager):
         return user
 
 
-# def upload_to(instance, filename):
-#     """
-#     return path for saving model's image
-#     """
-#     return f'user/avatars/{instance.email}/{filename}'.format(filename=filename)
+def upload_to(instance, filename):
+    """
+    return path for saving model's image
+    """
+    img_name, img_ext = os.path.splitext(instance.avatar.name)
+    user_email = instance.email
+    undotted_email = str(user_email).replace('.', '')
+    new_img_name = f'{undotted_email}_avatar{img_ext}'
+
+    return f'user/avatars/{new_img_name}'
 
 
 class User(AbstractBaseUser):
@@ -71,8 +76,7 @@ class User(AbstractBaseUser):
         verbose_name='password'
     )
     avatar = models.ImageField(
-        # default='/user/avatars/default_avatar.svg',
-        upload_to='user/avatars/',
+        upload_to=upload_to,
         blank=True,
         null=True,
         verbose_name='avatar'
@@ -103,21 +107,18 @@ class User(AbstractBaseUser):
         return True
 
     def save(self, *args, **kwargs):
-        if (
-                self.avatar.name is not None and
-                self.avatar.name != '/user/avatars/default_avatar.svg'
-        ):
-            img_name, img_ext = os.path.splitext(self.avatar.name)
-            user_email = self.email
-            undotted_email = str(user_email).replace('.', '')
-            new_img_name = f'{undotted_email}{img_ext}'
-            self.avatar.name = new_img_name
-            super().save(*args, **kwargs)
-            return
+        # if (
+        #         self.avatar.name is not None and
+        #         self.avatar.name != '/user/avatars/default_avatar.svg'
+        # ):
+        #
+        #     super().save(*args, **kwargs)
+        #     return
         super().save(*args, **kwargs)
 
     @property
     def get_avatar_url(self):
         if self.avatar and hasattr(self.avatar, 'url'):
             return self.avatar.url
-        else: return 'media/user/avatars/default_avatar.svg'
+        else:
+            return 'media/user/avatars/default_avatar.svg'

@@ -33,7 +33,6 @@ class UserLikedBooksAPI(APIView):
             serializer.save()
 
             def compare_slug(element):
-                print('execute>>>>>>>>>')
                 if element['slug'] == book_slug:
                     return True
                 return False
@@ -175,7 +174,6 @@ class UserPurchasesAPI(APIView):
     def get(self, request, pk, format=None):
         purchases_list = UserPurchasesList.objects.get(pk=pk)
         serializer = UserPurchasesListSerializer(purchases_list)
-
         return Response(serializer.data, status=status.HTTP_200_OK)
 
     def put(self, request, pk, format=None):
@@ -203,7 +201,7 @@ class UserPurchasesAPI(APIView):
                     }
                 )
             except Exception as error:
-                return Response(error,
+                return Response({error: error},
                                 status=status.HTTP_500_INTERNAL_SERVER_ERROR)
         serializer = UserPurchasesListSerializer(
             instance=purchases_list,
@@ -215,7 +213,7 @@ class UserPurchasesAPI(APIView):
             return Response(serializer.data,
                             status=status.HTTP_200_OK)
         return Response(serializer.errors,
-                        status=status.HTTP_200_OK)
+                        status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 # from user.models import User
 # u = User.objects.get(pk=2)

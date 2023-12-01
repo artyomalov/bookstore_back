@@ -172,7 +172,6 @@ class UserPurchasesListSerializer(serializers.Serializer):
         return purchase_items
 
     def update(self, instance: UserPurchasesList, validated_data):
-        print(self.context.get('cart_data_for_purchases'))
         for cart_item in self.context.get('cart_data_for_purchases'):
             purchase_item = PurchaseItem.objects.create(
                 user_purchases_list=instance,

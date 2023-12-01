@@ -2,7 +2,7 @@ from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.views import APIView
 from rest_framework.permissions import AllowAny
-from django.db.models import Avg, Value
+from django.db.models import Avg
 from .models import Book, Genre, Comment, Rating
 from .serializers import BookSerializer, CommentSerializer, GenreSerializer, \
     RatingSerializer
@@ -18,7 +18,6 @@ class BookList(APIView):
     permission_classes = [AllowAny, ]
 
     def get(self, request, format=None):
-        print(request.query_params.get('page'))
         genres_ids_filter = [
             *request.query_params.getlist('genre_id')]
         if len(genres_ids_filter) == 0:

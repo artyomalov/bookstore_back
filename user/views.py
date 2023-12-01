@@ -1,3 +1,6 @@
+import os
+import base64
+from django.core.files.base import ContentFile
 from rest_framework import permissions
 from rest_framework.views import APIView
 from rest_framework_simplejwt.authentication import JWTAuthentication
@@ -9,7 +12,6 @@ from rest_framework import status
 from rest_framework.parsers import MultiPartParser, FormParser
 from django.conf import settings
 from passlib.apps import django_context
-import os
 
 
 class AuthUserDetail(APIView):
@@ -32,64 +34,47 @@ class AuthUserDetail(APIView):
             raise Http404
 
     def get(self, request, format=None):
-
-        id = self.get_id(request)
-        user = self.get_object(id)
-        serializer = AuthorizedUserSerializer(user)
-            # path_to_user_avatar = os.path.join(
-            #     os.path.abspath('.'),
-            #     'media',
-            #     str(user.avatar).replace('/', '\\')
-            # )
-        # if not os.path.exists(path_to_user_avatar) and not os.path.isfile(
-        #         path_to_user_avatar):
-        #     domain = request.build_absolute_uri('/')[:-1]
-        return Response(serializer.data)
+        try:
+            id = self.get_id(request)
+            user = self.get_object(id)
+            serializer = AuthorizedUserSerializer(user)
+            return Response(serializer.data)
+        except:
+            return Response({"Error": "given token is not valid"},
+                            status=status.HTTP_401_UNAUTHORIZED)
 
     def put(self, request, format=None):
+        # print(request.data)
         id = self.get_id(request)
         user = self.get_object(id)
-        old_password = request.data.get('old_password')
-        new_password = request.data.get('new_password')
-        if bool(old_password) and bool(new_password):
-
-            hash = user.password
+        old_password = request.data.get('oldPassword')
+        new_password = request.data.get('newPassword')
+        if old_password != '' and new_password != '':
+            hashed_password = user.password
             is_validated = django_context.verify(
-                old_password, hash)
+                old_password, hashed_password)
             if not is_validated:
                 return Response({'error': 'Password is not valid'},
                                 status=status.HTTP_401_UNAUTHORIZED)
             user.set_password(new_password)
-        user_data = {
-            'email': request.data.get('email'),
-            'full_name': request.data.get('full_name'),
-            'avatar': request.data.get('avatar')
-        }
-        if request.data['avatar'] == 'null':
-            user_data = {
-                'email': request.data.get('email'),
-                'full_name': request.data.get('full_name'),
-            }
-        else:
-            user_avatar = user.avatar
-            path_to_old_avatar = os.path.join(
-                os.path.abspath('.'),
-                'user',
-                'media',
-                str(user_avatar).replace('/', '\\')
-            )
-            if path_to_old_avatar is not None:
-                if os.path.exists(path=path_to_old_avatar):
-                    os.remove(path_to_old_avatar)
 
-        serializer = AuthorizedUserSerializer(user, data=user_data,
-                                              partial=True)
+        format, imgstr = request.data.get('avatar').split(';base64,')
+        ext = format.split('/')[-1]
+
+        decoded_avatar_image = ContentFile(base64.b64decode(imgstr),
+                                           name='temp.' + ext)
+        user_data = {
+            'fullName': request.data.get('fullName'),
+            'email': request.data.get('email'),
+            'avatar': decoded_avatar_image
+        }
+        serializer = AuthorizedUserSerializer(user, data=user_data)
         if serializer.is_valid():
             serializer.save()
-            domain = request.build_absolute_uri('/')[:-1]
-
             return Response(serializer.data, status=status.HTTP_200_OK)
-        return Response(serializer.errors, status=status.HTTP_404_NOT_FOUND)
+        print(serializer.errors)
+        return Response(serializer.errors,
+                        status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
     def delete(self, request, format=None):
         id = self.get_id(request)

@@ -22,6 +22,7 @@ class BookAdmin(admin.ModelAdmin):
     list_editable = ('paperback_price', 'hardcover_price',)
     list_per_page = 10
     filter_horizontal = ('genres',)
+    prepopulated_fields = {'slug': ('title',)}
 
 
 @admin.register(Author)

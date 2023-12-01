@@ -9,12 +9,22 @@ from django.utils.text import slugify
 User = get_user_model()
 
 
-# def upload_to(instance, filename):
-#     """
-#     return path for saving model's image
-#     """
-#     return f'user/books/{instance.title}/{filename}'.format(
-#         filename=filename)
+def upload_to(instance, filename):
+    """
+    return path for saving model's image
+    """
+    img_name, img_ext = os.path.splitext(filename)
+    new_img_name = f'{instance.slug}{img_ext}'
+    return f'books/covers/{new_img_name}'
+
+
+def upload_to_preview(instance, filename):
+    """
+    return path for saving model's image
+    """
+    img_name, img_ext = os.path.splitext(filename)
+    new_img_name = f'{instance.slug}_preview{img_ext}'
+    return f'books/covers/{new_img_name}'
 
 
 class Book(models.Model):
@@ -42,10 +52,10 @@ class Book(models.Model):
     hardcover_price = models.FloatField(blank=False,
                                         validators=[MinValueValidator(1)],
                                         verbose_name='hardcover price')
-    cover_image_preview = models.ImageField(upload_to='books/covers/',
+    cover_image_preview = models.ImageField(upload_to=upload_to_preview,
                                             verbose_name='cover preview')
     cover_image = models.ImageField(
-        upload_to='books/covers/', blank=False,
+        upload_to=upload_to, blank=False,
         null=False, verbose_name='cover full size')
     authors = models.ManyToManyField('Author', verbose_name='authors list')
     genres = models.ManyToManyField('Genre', verbose_name='genres list')
@@ -59,13 +69,8 @@ class Book(models.Model):
         return self.title
 
     def save(self, *args, **kwargs):
-        img_name, img_ext = os.path.splitext(self.cover_image.name)
-        preview_name, preview_ext = os.path.splitext(self.cover_image.name)
-        new_img_name = f'{self.title}{img_ext}'
-        new_preview_name = f'{self.title}_preview{preview_ext}'
-        self.cover_image.name = new_img_name
-        self.cover_image_preview.name = new_preview_name
-        self.slug = slugify(self.title)
+        if self.slug == '':
+            self.slug = slugify(self.title)
         super().save(*args, **kwargs)
 
 
@@ -116,7 +121,8 @@ class Comment(models.Model):
     link to the created comment user and related book.
     """
     comment_text = models.TextField(max_length=4000, verbose_name='comment')
-    created_at = models.DateTimeField(verbose_name='created at', auto_now_add=True)
+    created_at = models.DateTimeField(verbose_name='created at',
+                                      auto_now_add=True)
     user = models.ForeignKey(User, on_delete=models.CASCADE,
                              verbose_name='left comment user')
     book = models.ForeignKey(Book, on_delete=models.CASCADE,

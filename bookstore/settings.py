@@ -36,7 +36,6 @@ INSTALLED_APPS = [
     'rest_framework_simplejwt',
     'user.apps.UserConfig',
     'authentication.apps.AuthenticationConfig',
-    'django_cleanup.apps.CleanupConfig',
     'debug_toolbar',
     'book.apps.BookConfig',
     'user_staff.apps.UserStaffConfig',

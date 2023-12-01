@@ -14,9 +14,9 @@ from passlib.apps import django_context
 
 
 class SignupAPIView(APIView):
-    '''
+    """
     User's registration view
-    '''
+    """
 
     permission_classes = [AllowAny, ]
 
@@ -33,13 +33,14 @@ class SignupAPIView(APIView):
                 serializer.save()
 
                 data = {'email': serializer.data['email']}
-                response = status.HTTP_201_CREATED
+                print(data)
+                response_status = status.HTTP_201_CREATED
             else:
                 data = ''
                 raise ValidationError(
                     {
                         'password_mismatch': 'Password fields don\'t not match.'})
-            return Response(data, status=response)
+            return Response(data, status=response_status)
         except Exception as err:
             data = {'error': err}
             return Response(data, status=status.HTTP_400_BAD_REQUEST)
@@ -78,8 +79,7 @@ class CustomTokenObtainPairView(APIView):
                             status=status.HTTP_401_UNAUTHORIZED)
 
         token_data = self.create_token(user)
-        serializer = AuthorizedUserSerializer(user,
-                                              context={'request': request})
+        serializer = AuthorizedUserSerializer(user)
         return Response(
             {'token_data': token_data, 'user_data': serializer.data},
             status=status.HTTP_200_OK)
