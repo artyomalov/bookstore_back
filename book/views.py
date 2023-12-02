@@ -46,7 +46,7 @@ class BookList(APIView):
         else:
             books_queryset = books_queryset.order_by(
                 sort_type).distinct()
-        paginator = Paginator(books_queryset, per_page=4)
+        paginator = Paginator(books_queryset, per_page=12)
         serializer = BookSerializer(paginator.page(page), many=True)
         return Response({
             'books': serializer.data,
@@ -112,7 +112,6 @@ class CreateComment(APIView):
             'user_id': request.data.get('userId'),
             'book_id': request.data.get('bookId')
         }
-        print(request.data)
         serializer = CommentSerializer(data=validated_data, context=context)
         if serializer.is_valid():
             serializer.save()

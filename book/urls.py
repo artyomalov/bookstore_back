@@ -11,7 +11,7 @@ urlpatterns = [
     path('comments/create', CreateComment.as_view()),
     path('comments_list/<slug:slug>', GetComments.as_view()),
     path('rating/get_average/<int:book_id>', GetAverageRating.as_view()),
-    path('rating/rate/', CreateRating.as_view()),
+    path('rating/rate', CreateRating.as_view()),
     path('genres/', GenresList.as_view(),
          )
 

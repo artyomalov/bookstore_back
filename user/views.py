@@ -44,7 +44,6 @@ class AuthUserDetail(APIView):
                             status=status.HTTP_401_UNAUTHORIZED)
 
     def put(self, request, format=None):
-        # print(request.data)
         id = self.get_id(request)
         user = self.get_object(id)
         old_password = request.data.get('oldPassword')
@@ -57,18 +56,21 @@ class AuthUserDetail(APIView):
                 return Response({'error': 'Password is not valid'},
                                 status=status.HTTP_401_UNAUTHORIZED)
             user.set_password(new_password)
+        user_data = {'fullName': request.data.get('fullName'),
+                     'email': request.data.get('email')}
+        try:
+            format, imgstr = request.data.get('avatar').split(';base64,')
+            ext = format.split('/')[-1]
 
-        format, imgstr = request.data.get('avatar').split(';base64,')
-        ext = format.split('/')[-1]
-
-        decoded_avatar_image = ContentFile(base64.b64decode(imgstr),
-                                           name='temp.' + ext)
-        user_data = {
-            'fullName': request.data.get('fullName'),
-            'email': request.data.get('email'),
-            'avatar': decoded_avatar_image
-        }
-        serializer = AuthorizedUserSerializer(user, data=user_data)
+            decoded_avatar_image = ContentFile(base64.b64decode(imgstr),
+                                               name='temp.' + ext)
+            user_data['avatar'] = decoded_avatar_image
+        except ValueError:
+            pass
+        serializer = AuthorizedUserSerializer(user, data=user_data,
+                                              context={
+                                                  'fullName': request.data.get(
+                                                      'fullName')})
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data, status=status.HTTP_200_OK)

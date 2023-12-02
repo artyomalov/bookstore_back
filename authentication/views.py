@@ -64,12 +64,13 @@ class CustomTokenObtainPairView(APIView):
         }
 
     def post(self, request):
+        # return Response({'error': 'User does not exist'},
+        #                 status=status.HTTP_404_NOT_FOUND)
         password = request.data.get('password')
         email = request.data.get('email')
         user = self.get_user(email=email)
         if user == None:
-            print('<<<<<<<<<<<<<User does not exist>>>>>>>>>>>>>')
-            return Response('User does not exist',
+            return Response({'error': 'User does not exist'},
                             status=status.HTTP_404_NOT_FOUND)
 
         hash = user.password
