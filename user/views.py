@@ -10,7 +10,6 @@ from .serializers import AuthorizedUserSerializer
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.parsers import MultiPartParser, FormParser
-from django.conf import settings
 from passlib.apps import django_context
 
 

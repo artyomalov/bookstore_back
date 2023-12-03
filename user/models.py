@@ -1,7 +1,6 @@
 import os
 from django.db import models
 from django.contrib.auth.models import BaseUserManager, AbstractBaseUser
-from django.utils.translation import gettext_lazy as _
 
 
 class UserManager(BaseUserManager):
@@ -70,7 +69,7 @@ class User(AbstractBaseUser):
     full_name = models.CharField(
         blank=True,
         null=True,
-        verbose_name='full_name'
+        verbose_name='full name'
     )
     password = models.CharField(
         verbose_name='password'

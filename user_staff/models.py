@@ -44,12 +44,6 @@ class CartItem(models.Model):
     Model of cart item. Contains quantity of books, that user is going to buy
     and related book's model.
     """
-    # PAPERBACK = 'paperback'
-    # HARDCOVER = 'hardcover'
-    # COVER_CHOICES = [
-    #     ('PAPERBACK', 'paperback'),
-    #     ('HARDCOVER', 'hardcover')
-    # ]
     user_cart = models.ForeignKey(
         UserCart, on_delete=models.CASCADE, related_name='cart_item',
         verbose_name='user\'s cart')
@@ -62,9 +56,6 @@ class CartItem(models.Model):
         MinValueValidator(1), MaxValueValidator(99)],
                                    verbose_name='stored quantity')
     price = models.FloatField(default=19.99)
-
-    def is_upperclass(self):
-        return self.cover_type in {self.PAPERBACK, self.HARDCOVER}
 
     def __str__(self):
         return f'Cart item for {self.user_cart.user_id.email}'
@@ -112,9 +103,6 @@ class PurchaseItem(models.Model):
     price = models.IntegerField(default=19.99)
     bought_time = models.DateTimeField(auto_now_add=True,
                                        verbose_name='bought time')
-
-    def is_upperclass(self):
-        return self.cover_type in {self.PAPERBACK, self.HARDCOVER}
 
     def __str__(self):
         return f'Purchase item for {self.user_purchases_list.user_id.email}'

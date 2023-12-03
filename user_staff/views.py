@@ -178,9 +178,9 @@ class UserPurchasesAPI(APIView):
 
     def put(self, request, pk, format=None):
         purchases_list = UserPurchasesList.objects.get(pk=pk)
+        cart_items_ids = request.data.get('cartItemsIds')
         cart_items_query = CartItem.objects.filter(
-            pk__in=[*request.data.get('cartItemIds')])
-
+            pk__in=[*cart_items_ids])
         cart_data_for_purchases = []
         for cart_item in cart_items_query:
             book = cart_item.book
@@ -210,6 +210,7 @@ class UserPurchasesAPI(APIView):
         )
         if serializer.is_valid():
             serializer.save()
+            cart_items_query.delete()
             return Response(serializer.data,
                             status=status.HTTP_200_OK)
         return Response(serializer.errors,

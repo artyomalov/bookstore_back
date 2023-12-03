@@ -2,13 +2,6 @@ from django.contrib import admin
 from .models import Book, Author, Rating, Comment, Genre
 
 
-#
-# admin.site.register(Book)
-# admin.site.register(Author)
-# admin.site.register(Rating)
-# admin.site.register(Genre)
-# admin.site.register(Comment)
-
 @admin.register(Book)
 class BookAdmin(admin.ModelAdmin):
     list_display = (
@@ -21,8 +14,12 @@ class BookAdmin(admin.ModelAdmin):
     list_display_links = ('title', 'slug',)
     list_editable = ('paperback_price', 'hardcover_price',)
     list_per_page = 10
-    filter_horizontal = ('genres',)
+    filter_horizontal = ('genres', 'authors')
     prepopulated_fields = {'slug': ('title',)}
+    ordering = ('id',)
+    search_fields = ('title__icontains', 'slug__icontains',)
+    search_help_text = 'Search by title and slug fields'
+    list_filter = ('genres', 'authors')
 
 
 @admin.register(Author)
@@ -38,6 +35,7 @@ class RatingAdmin(admin.ModelAdmin):
     list_display = ('id', 'user', 'book', 'rate',)
     list_display_links = ('id', 'rate')
     list_per_page = 20
+    list_filter = ('book',)
 
 
 @admin.register(Comment)
@@ -46,6 +44,9 @@ class CommentAdmin(admin.ModelAdmin):
     list_display_links = ('id', 'created_at',)
     list_per_page = 20
     ordering = ('id',)
+    search_fields = ('comment_text__icontains',)
+    search_help_text = 'Search by comment fields'
+    list_filter = ('user', 'book',)
 
 
 @admin.register(Genre)

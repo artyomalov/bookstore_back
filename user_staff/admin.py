@@ -35,9 +35,13 @@ class UserCartAdmin(admin.ModelAdmin):
 
 @admin.register(CartItem)
 class CartItemAdmin(admin.ModelAdmin):
-    list_display = ('id', 'user_cart', 'book', 'quantity', 'cover_type')
-    list_display_links = ('id', 'user_cart')
+    list_display = (
+        'id', 'user_cart', 'book', 'quantity', 'cover_type', 'price',)
+    list_display_links = ('id', 'user_cart',)
     ordering = ('id',)
+    list_filter = ('user_cart__user_id__email',)
+    readonly_fields = (
+        'id', 'user_cart', 'book', 'quantity', 'cover_type', 'price',)
 
 
 @admin.register(UserPurchasesList)
@@ -62,3 +66,12 @@ class PurchaseItemAdmin(admin.ModelAdmin):
         'bought_time',)
     list_display_links = ('id', 'user_purchases_list',)
     ordering = ('id',)
+    list_filter = ('user_purchases_list__user_id__email',)
+    readonly_fields = (
+        'user_purchases_list',
+        'book',
+        'quantity',
+        'cover_type',
+        'price',
+        'bought_time',
+    )
